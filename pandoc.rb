@@ -12,21 +12,28 @@ class PandocGenerator < Generator
     outputs.each do |output|
       FileUtils.mkdir_p(output)
 
+# Get the extra flags if passed on _config.yml
+      extra_flags = ''
+      if output.is_a?(Hash)
+        extra_flags = output.values
+        output = output.keys
+      end
+
       site.posts.each do |post|
         filename = File.join(output, post.url).gsub(/\.html$/, ".#{output}")
 
 # Special cases, pdf and epub require -o
-        if ['pdf', 'epub'].include? output
+        if ['pdf', 'epub'].include?(output)
           output_flag = "-o #{filename}"
         else
           output_flag = "-t #{output} -o #{filename}"
         end
 
 # Inform what's being done
-        puts "pandoc #{flags} #{output_flag}"
+        puts "pandoc #{flags} #{output_flag} #{extra_flags}"
 
 # Do the stuff
-        Open3::popen3("pandoc #{flags} #{output_flag}") do |stdin, stdout, stderr|
+        Open3::popen3("pandoc #{flags} #{output_flag} #{extra_flags}") do |stdin, stdout, stderr|
           stdin.puts post.content
           stdin.close
         end

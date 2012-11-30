@@ -27,7 +27,7 @@ Add to `_config.yml`:
       skip: false
       flags: '--smart --bibliography=ref.bib'
       outputs:
-        - pdf
+        - pdf: '--latex-engine=latex'
         - epub
         - markdown
 
@@ -37,9 +37,8 @@ regular jekyll site build.
 * `flags` is a string with the flags you will normally pass to `pandoc` on cli.
   It's used with all output types.
 
-* `outputs` is an array of output formats (even markdown!). I'll add support
-  for specific flags (templates) on a next release.
-
+* `outputs` is an array of output formats (even markdown!). You can add
+  output-specific flags as a hash.
 
 ## Layout
 
@@ -51,3 +50,7 @@ other available formats from the post itself:
             <li><a href="{{ format }}/{{ page.url | replace:'html',format }}">{{ format }}</a></li>
     {% endfor %}
     </li>
+
+## How to run
+
+Execute `jekyll` normally :D
