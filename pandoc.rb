@@ -9,13 +9,15 @@ class PandocGenerator < Generator
 
     return if site.config['pandoc']['skip']
 
-    outputs.each do |output|
+    outputs.each_with_index do |output, i|
 
 # Get the extra flags if passed on _config.yml
       extra_flags = ''
       if output.is_a?(Hash)
         extra_flags = output.values.join(' ')
         output = output.keys.join(' ')
+# The templates don't receive the hash
+        site.config['pandoc']['outputs'][i] = output
       end
 
       FileUtils.mkdir_p(output)
