@@ -10,7 +10,6 @@ class PandocGenerator < Generator
     return if site.config['pandoc']['skip']
 
     outputs.each do |output|
-      FileUtils.mkdir_p(output)
 
 # Get the extra flags if passed on _config.yml
       extra_flags = ''
@@ -18,6 +17,8 @@ class PandocGenerator < Generator
         extra_flags = output.values
         output = output.keys
       end
+
+      FileUtils.mkdir_p(output)
 
       site.posts.each do |post|
         filename = File.join(output, post.url).gsub(/\.html$/, ".#{output}")
