@@ -14,8 +14,8 @@ class PandocGenerator < Generator
 # Get the extra flags if passed on _config.yml
       extra_flags = ''
       if output.is_a?(Hash)
-        extra_flags = output.values
-        output = output.keys
+        extra_flags = output.values.join(' ')
+        output = output.keys.join(' ')
       end
 
       FileUtils.mkdir_p(output)
