@@ -25,8 +25,8 @@ class PandocGenerator < Generator
       site.posts.each do |post|
         filename = File.join(output, post.url).gsub(/\.html$/, ".#{output}")
 
-# Special cases, pdf and epub require -o
-        if ['pdf', 'epub'].include?(output)
+# Special cases, stdout is disabled for these
+        if ['pdf', 'epub', 'odt', 'docx'].include?(output)
           output_flag = "-o #{filename}"
         else
           output_flag = "-t #{output} -o #{filename}"
