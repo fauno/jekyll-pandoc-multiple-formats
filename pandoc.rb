@@ -20,9 +20,13 @@ class PandocGenerator < Generator
         site.config['pandoc']['outputs'][i] = output
       end
 
-      FileUtils.mkdir_p(output)
-
       site.posts.each do |post|
+
+        post_path = File.join(output, File.dirname(post.url))
+
+        puts "Creating #{post_path}"
+        FileUtils.mkdir_p(post_path)
+
         filename = File.join(output, post.url).gsub(/\.html$/, ".#{output}")
 
 # Special cases, pdf and epub require -o
