@@ -29,19 +29,28 @@ class PandocGenerator < Generator
 
         filename = File.join(output, post.url).gsub(/\.html$/, ".#{output}")
 
-# Special cases, pdf and epub require -o
-        if ['pdf', 'epub'].include?(output)
+# Special cases, stdout is disabled for these
+        if ['pdf', 'epub', 'odt', 'docx'].include?(output)
           output_flag = "-o #{filename}"
         else
           output_flag = "-t #{output} -o #{filename}"
         end
 
+# The command
+        pandoc = "pandoc #{flags} #{output_flag} #{extra_flags}"
+
 # Inform what's being done
-        puts "pandoc #{flags} #{output_flag} #{extra_flags}"
+        puts pandoc
+
+# Make the markdown header so pandoc receives metadata
+        content  = "% #{post.data['title']}\n"
+        content << "% #{post.data['author']}\n"
+#        content << "% #{post.date}\n\n"
+        content << post.content
 
 # Do the stuff
-        Open3::popen3("pandoc #{flags} #{output_flag} #{extra_flags}") do |stdin, stdout, stderr|
-          stdin.puts post.content
+        Open3::popen3(pandoc) do |stdin, stdout, stderr|
+          stdin.puts content
           stdin.close
         end
 
