@@ -64,21 +64,23 @@ class PandocGenerator < Generator
   end
 end
 
+module Converters
 # Just return html5
-class MarkdownConverter
-  def convert(content)
-    flags  = @config['pandoc']['flags']
+  class Markdown < Converter
+    def convert(content)
+      flags  = @config['pandoc']['flags']
 
-    output = ''
-    Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
-      stdin.puts content
-      stdin.close
+      output = ''
+      Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
+        stdin.puts content
+        stdin.close
 
-      output = stdout.read.strip
+        output = stdout.read.strip
+      end
+
+      output
+
     end
-
-    output
-
   end
 end
 end
