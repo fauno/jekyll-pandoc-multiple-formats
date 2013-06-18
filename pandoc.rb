@@ -7,8 +7,6 @@ class PandocGenerator < Generator
     outputs = site.config['pandoc']['outputs']
     flags  = site.config['pandoc']['flags']
 
-    return if site.config['pandoc']['skip']
-
     outputs.each_with_index do |output, i|
 
 # Get the extra flags if passed on _config.yml
@@ -19,6 +17,9 @@ class PandocGenerator < Generator
 # The templates don't receive the hash
         site.config['pandoc']['outputs'][i] = output
       end
+
+# Skip conversion if we're skipping, but still cleanup the outputs hash
+      next if site.config['pandoc']['skip']
 
       site.posts.each do |post|
 
@@ -36,7 +37,7 @@ class PandocGenerator < Generator
           output_flag = "-t #{output} -o #{filename}"
         end
 
-# Add cover if epub                                                                              
+# Add cover if epub
         if output == "epub" and not post.data['cover'].nil?
           output_flag << "--epub-cover-image=#{post.data['cover']}"
         end
