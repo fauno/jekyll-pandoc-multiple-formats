@@ -19,6 +19,7 @@ Second, it'll also generate the post in other formats you like, so your blog
 can be made available in different formats at the same time. Epub for ebook
 readers, mediawiki for copy&paste to wikis, etc.
 
+
 ## Configuration
 
 Add to `_config.yml`:
@@ -26,10 +27,11 @@ Add to `_config.yml`:
     pandoc:
       skip: false
       flags: '--smart --bibliography=ref.bib'
+      site_flags: '--toc'
       outputs:
-        - pdf: '--latex-engine=latex'
-        - epub
-        - markdown
+        pdf: '--latex-engine=latex'
+        epub:
+        markdown:
 
 * `skip` allows you to skip the other formats generation and proceed with the
 regular jekyll site build.
@@ -37,20 +39,46 @@ regular jekyll site build.
 * `flags` is a string with the flags you will normally pass to `pandoc` on cli.
   It's used with all output types.
 
-* `outputs` is an array of output formats (even markdown!). You can add
-  output-specific flags as a hash.
+* `outputs` is a hash of output formats (even markdown!). You can add
+  output-specific flags.
+
+**IMPORTANT**: If you were using this plugin before 2013-07-17 you have
+to change your _config.yml syntax, change pandoc.outputs from array to
+hashes (see the example :)
+
+
+## Front Matter
+
+Support for epub covers has been added.  You can add the path to a cover
+on the front matter of the article to have pandoc add a cover image on
+the epub result.
+
+    ---
+    author: you
+    title: awesome stuff
+    cover: images/awesome.png
+    ---
+
+    etc...
+
 
 ## Layout
 
 Add this liquid snippet on your `_layout/post.html` to generate links to the
 other available formats from the post itself:
 
-    <li>
-    {% for format in site.pandoc.outputs %}
-            <li><a href="{{ format }}/{{ page.url | replace:'html',format }}">{{ format }}</a></li>
-    {% endfor %}
-    </li>
+      <ul>
+        {% for format in site.pandoc.outputs %}
+        {% capture extension %}{{ format | first }}{% endcapture %}
+        <li>
+          <a href="{{ extension }}{{ page.url | remove:'.html' }}.{{ extension }}">
+            {{ extension }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+
 
 ## How to run
 
-Execute `jekyll` normally :D
+Execute `jekyll build` normally :D
