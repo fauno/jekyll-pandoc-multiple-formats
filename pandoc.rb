@@ -7,16 +7,7 @@ class PandocGenerator < Generator
     outputs = site.config['pandoc']['outputs']
     flags  = site.config['pandoc']['flags']
 
-    outputs.each_with_index do |output, i|
-
-# Get the extra flags if passed on _config.yml
-      extra_flags = ''
-      if output.is_a?(Hash)
-        extra_flags = output.values.join(' ')
-        output = output.keys.join(' ')
-# The templates don't receive the hash
-        site.config['pandoc']['outputs'][i] = output
-      end
+    outputs.each_pair do |output, extra_flags|
 
 # Skip conversion if we're skipping, but still cleanup the outputs hash
       next if site.config['pandoc']['skip']
@@ -74,7 +65,7 @@ module Converters
 # Just return html5
   class Markdown < Converter
     def convert(content)
-      flags  = @config['pandoc']['flags']
+      flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
 
       output = ''
       Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
@@ -82,6 +73,7 @@ module Converters
         stdin.close
 
         output = stdout.read.strip
+
       end
 
       output
