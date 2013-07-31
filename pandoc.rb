@@ -78,6 +78,15 @@ module Converters
       output
 
     end
+
+    def matches(ext)
+      rgx = '(' + @config['markdown_ext'].gsub(',','|') +')'
+      ext =~ Regexp.new(rgx, Regexp::IGNORECASE)
+    end
+
+    def output_ext(ext)
+      ".html"
+    end
   end
 end
 end
