@@ -9,7 +9,7 @@ class PandocGenerator < Generator
 
     outputs.each_pair do |output, extra_flags|
 
-# Skip conversion if we're skipping, but still cleanup the outputs hash
+      # Skip conversion if we're skipping, but still cleanup the outputs hash
       next if site.config['pandoc']['skip']
 
       site.posts.each do |post|
@@ -21,40 +21,39 @@ class PandocGenerator < Generator
 
         filename = File.join(output, post.url).gsub(/\.html$/, ".#{output}")
 
-# Special cases, stdout is disabled for these
+        # Special cases, stdout is disabled for these
         if ['pdf', 'epub', 'odt', 'docx'].include?(output)
           output_flag = "-o #{filename}"
         else
           output_flag = "-t #{output} -o #{filename}"
         end
 
-# Add cover if epub
+        # Add cover if epub
         if output == "epub" and not post.data['cover'].nil?
           output_flag << " --epub-cover-image=#{post.data['cover']}"
         end
 
-# The command
+        # The command
         pandoc = "pandoc #{flags} #{output_flag} #{extra_flags}"
 
-# Inform what's being done
+        # Inform what's being done
         puts pandoc
 
-# Make the markdown header so pandoc receives metadata
+        # Make the markdown header so pandoc receives metadata
         content  = "% #{post.data['title']}\n"
         content << "% #{post.data['author']}\n"
-#        content << "% #{post.date}\n\n"
         content << post.content
 
-# Do the stuff
+        # Do the stuff
         Open3::popen3(pandoc) do |stdin, stdout, stderr|
           stdin.puts content
           stdin.close
         end
 
-# Skip failed files
+        # Skip failed files
         next if not File.exist? filename
 
-# Add them to the static files list
+        # Add them to the static files list
         site.static_files << StaticFile.new(site, site.source, '', filename)
       end
     end
@@ -62,7 +61,7 @@ class PandocGenerator < Generator
 end
 
 module Converters
-# Just return html5
+  # Just return html5
   class Markdown < Converter
     def convert(content)
       flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
@@ -78,6 +77,15 @@ module Converters
 
       output
 
+    end
+
+    def matches(ext)
+      rgx = '(' + @config['markdown_ext'].gsub(',','|') +')'
+      ext =~ Regexp.new(rgx, Regexp::IGNORECASE)
+    end
+
+    def output_ext(ext)
+      ".html"
     end
   end
 end
