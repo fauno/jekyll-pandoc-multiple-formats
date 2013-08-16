@@ -12,20 +12,25 @@ class PandocGenerator < Generator
       # Skip conversion if we're skipping, but still cleanup the outputs hash
       next if site.config['pandoc']['skip']
 
+      # If there isn't a config entry for pandoc's output throw it with the rest
+      base_dir = site.config['pandoc']['output'] || site.source
+
       site.posts.each do |post|
 
-        post_path = File.join(output, File.dirname(post.url))
+        post_path = File.join(base_dir, output, File.dirname(post.url))
 
         puts "Creating #{post_path}"
         FileUtils.mkdir_p(post_path)
 
-        filename = File.join(output, post.url).gsub(/\.html$/, ".#{output}")
+        filename = post.url.gsub(/\.html$/, ".#{output}")
+
+        filename_with_path = File.join(post_path, filename)
 
         # Special cases, stdout is disabled for these
         if ['pdf', 'epub', 'odt', 'docx'].include?(output)
-          output_flag = "-o #{filename}"
+          output_flag = "-o #{filename_with_path}"
         else
-          output_flag = "-t #{output} -o #{filename}"
+          output_flag = "-t #{output} -o #{filename_with_path}"
         end
 
         # Add cover if epub
@@ -51,10 +56,10 @@ class PandocGenerator < Generator
         end
 
         # Skip failed files
-        next if not File.exist? filename
+        next if not File.exist? filename_with_path
 
         # Add them to the static files list
-        site.static_files << StaticFile.new(site, site.source, '', filename)
+        site.static_files << StaticFile.new(site, base_dir, output, filename)
       end
     end
   end
