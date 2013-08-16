@@ -26,7 +26,7 @@ Add to `_config.yml`:
 
     pandoc:
       skip: false
-      output: .tmp
+      output: ./tmp
       flags: '--smart --bibliography=ref.bib'
       site_flags: '--toc'
       outputs:
