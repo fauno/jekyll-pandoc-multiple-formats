@@ -1,4 +1,5 @@
 require 'open3'
+require 'jekyll-pandoc-multiple-formats/version'
 
 module Jekyll
 
