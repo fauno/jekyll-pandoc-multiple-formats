@@ -5,7 +5,7 @@ require 'jekyll-pandoc-multiple-formats/version'
 
 Gem::Specification.new do |gem|
   gem.name          = "jekyll-pandoc-multiple-formats"
-  gem.version       = JekyllPandoc::VERSION
+  gem.version       = JekyllPandocMultipleFormats::VERSION
   gem.authors       = ["Mauricio Pasquier Juan", "Nicolás Reynolds"]
   gem.email         = ["mauricio@pasquierjuan.com.ar", "fauno@endefensadelsl.org"]
   gem.description   = %q{This jekyll plugin was inspired by

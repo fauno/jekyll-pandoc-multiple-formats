@@ -1,3 +1,3 @@
-module JekyllPandoc
+module JekyllPandocMultipleFormats
   VERSION = "0.0.3"
 end
