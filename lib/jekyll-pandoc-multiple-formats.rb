@@ -23,6 +23,8 @@ class PandocGenerator < Generator
         FileUtils.mkdir_p(post_path)
 
         filename = post.url.gsub(/\.html$/, ".#{output}")
+        # Have a filename!
+        filename = "#{post.url.gsub(/\//, "-").gsub(/-$/, "")}.#{output}" if filename =~ /\/$/
 
         filename_with_path = File.join(post_path, filename)
 
