@@ -1,4 +1,5 @@
 require 'open3'
+require 'jekyll-pandoc-multiple-formats/version'
 
 module Jekyll
 
@@ -66,34 +67,59 @@ class PandocGenerator < Generator
     end
   end
 end
+end
 
-module Converters
-  # Just return html5
-  class Markdown < Converter
-    def convert(content)
-      flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
+# Namespacing and metaprogramming FTW
+module JekyllPandocMultipleFormats
+  # Determines the correct module where it lives the converter
+  def self.namespace
+    Jekyll::VERSION >= '1.0.0' ? Jekyll::Converters : Jekyll
+  end
 
-      output = ''
-      Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
-        stdin.puts content
-        stdin.close
+  # Determines the correct class name. Jekyll has the converters class kinda
+  # hardcoded
+  def self.class_name
+    Jekyll::VERSION >= '1.0.0' ? 'Markdown' : 'MarkdownConverter'
+  end
 
-        output = stdout.read.strip
+  def self.build
+    namespace::const_get(class_name).send :include, ConverterMethods
+  end
 
+  # When included in the correspondant markdown class this module redefines the
+  # three needed Converter instance methods
+  module ConverterMethods
+    def self.included(base)
+      base.class_eval do
+        # Just return html5
+        def convert(content)
+          flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
+
+          output = ''
+          Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
+            stdin.puts content
+            stdin.close
+
+            output = stdout.read.strip
+
+          end
+
+          output
+
+        end
+
+        def matches(ext)
+          rgx = '(' + @config['markdown_ext'].gsub(',','|') +')'
+          ext =~ Regexp.new(rgx, Regexp::IGNORECASE)
+        end
+
+        def output_ext(ext)
+          ".html"
+        end
       end
-
-      output
-
-    end
-
-    def matches(ext)
-      rgx = '(' + @config['markdown_ext'].gsub(',','|') +')'
-      ext =~ Regexp.new(rgx, Regexp::IGNORECASE)
-    end
-
-    def output_ext(ext)
-      ".html"
     end
   end
 end
-end
+
+# Conjures the metamagic
+JekyllPandocMultipleFormats.build
