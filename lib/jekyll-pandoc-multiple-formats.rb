@@ -27,7 +27,7 @@ class PandocGenerator < Generator
         # Have a filename!
         filename = "#{post.url.gsub(/\//, "-").gsub(/-$/, "")}.#{output}" if filename =~ /\/$/
 
-        filename_with_path = File.join(post_path, filename)
+        filename_with_path = File.join(base_dir, output, filename)
 
         # Special cases, stdout is disabled for these
         if ['pdf', 'epub', 'odt', 'docx'].include?(output)
@@ -56,6 +56,7 @@ class PandocGenerator < Generator
         Open3::popen3(pandoc) do |stdin, stdout, stderr|
           stdin.puts content
           stdin.close
+          STDERR.print stderr.read
         end
 
         # Skip failed files
@@ -101,6 +102,7 @@ module JekyllPandocMultipleFormats
             stdin.close
 
             output = stdout.read.strip
+            STDERR.print stderr.read
 
           end
 
