@@ -79,6 +79,15 @@ other available formats from the post itself:
         {% endfor %}
       </ul>
 
+## How to install
+
+Add this snippet to your `\_config.yml` on jekyll 1.3
+
+    gems: [ 'jekyll-pandoc-multiple-formats' ]
+
+Alternative, see
+[here](https://github.com/fauno/jekyll-pandoc-multiple-formats/issues/7).
+
 
 ## How to run
 
