@@ -56,6 +56,7 @@ class PandocGenerator < Generator
         Open3::popen3(pandoc) do |stdin, stdout, stderr|
           stdin.puts content
           stdin.close
+          STDERR.print stderr.read
         end
 
         # Skip failed files
@@ -101,6 +102,7 @@ module JekyllPandocMultipleFormats
             stdin.close
 
             output = stdout.read.strip
+            STDERR.print stderr.read
 
           end
 
