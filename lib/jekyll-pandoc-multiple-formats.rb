@@ -14,7 +14,7 @@ class PandocGenerator < Generator
       next if site.config['pandoc']['skip']
 
       # If there isn't a config entry for pandoc's output throw it with the rest
-      base_dir = site.config['pandoc']['output'] || site.source
+      base_dir = File.join(site.source, site.config['pandoc']['output']) || site.source
 
       site.posts.each do |post|
 
