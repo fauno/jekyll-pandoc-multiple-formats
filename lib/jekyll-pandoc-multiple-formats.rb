@@ -96,19 +96,22 @@ module JekyllPandocMultipleFormats
       base.class_eval do
         # Just return html5
         def convert(content)
-          flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
+          FileUtils.cd(@config['source']) do
+            flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
 
-          output = ''
-          Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
-            stdin.puts content
-            stdin.close
+            output = ''
+            Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
+              stdin.puts content
+              stdin.close
 
-            output = stdout.read.strip
-            STDERR.print stderr.read
+              output = stdout.read.strip
+              STDERR.print stderr.read
+
+            end
+
+            output
 
           end
-
-          output
 
         end
 
