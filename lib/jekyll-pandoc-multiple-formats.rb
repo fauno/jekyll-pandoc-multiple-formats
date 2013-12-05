@@ -5,6 +5,7 @@ module Jekyll
 
 class PandocGenerator < Generator
   def generate(site)
+    FileUtils.cd(site.config['source']) do
     outputs = site.config['pandoc']['outputs']
     flags  = site.config['pandoc']['flags']
 
@@ -66,6 +67,7 @@ class PandocGenerator < Generator
         site.static_files << StaticFile.new(site, base_dir, output, filename)
       end
     end
+  end
   end
 end
 end
