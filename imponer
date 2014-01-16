@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# Cantidad de páginas
+pages="$(pdfinfo "$1" | grep "^Pages:" | cut -d: -f2 | tr -d " ")"
+
+# Encontramos el múltiplo de 4 más cercano a la cantidad de páginas
+pages4="$(echo "((${pages}+3)/4)*4" | bc)"
+# y luego el múltiplo de 4 más cercano al dividir la cantidad de páginas
+# por dos (porque cada hoja tiene dos mitades del libro)
+pages8="$(echo "(${pages4}/2+3)/4*4" | bc)"
+
+# Creamos la imposición de páginas para A5
+pdfjam --vanilla \
+       --outfile "${1%/*}" \
+       --paper a5paper \
+       --suffix tmp \
+       --landscape \
+       --signature ${pages4} \
+       "$1"
+
+# Y luego lo dividimos por la mitad y hacemos 2x2 en A4
+pdfjam --vanilla \
+       --outfile "${1%/*}" \
+       --paper a4paper \
+       --suffix imposicion \
+       --no-landscape \
+       --signature ${pages8} \
+       "${1%.pdf}-tmp.pdf"
+
+rm "${1%.pdf}-tmp.pdf"
