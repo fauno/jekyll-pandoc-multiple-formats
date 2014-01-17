@@ -3,6 +3,11 @@
 file = ARGV.first
 exit if not File.exist? file
 
+# Los temporales tiene un sufijo -tmp
+file_tmp = file.gsub(/\.pdf$/, '-tmp.pdf')
+# Los definitivos -tmp-imposed
+file_imp = file.gsub(/\.pdf$/, '-tmp-imposed.pdf')
+
 # Cantidad de páginas
 pages = `pdfinfo '#{file}' | grep '^Pages:' | cut -d: -f2 | tr -d ' '`.to_i
 
@@ -28,7 +33,7 @@ pages8 = ((pages4/2+3)/4*4).to_i
         --suffix imposed \
         --no-landscape \
         --signature #{pages8} \
-        "#{file.gsub /\.pdf$/, '-tmp.pdf'}"`
+        "#{file_tmp}"`
 
-`rm "#{file.gsub /\.pdf$/, '-tmp.pdf'}"`
-`mv "#{file.gsub /\.pdf$/, '-tmp-imposed.pdf'}" "#{file.gsub /-tmp/, ''}"`
+`rm -v "#{file_tmp}"`
+`mv -v "#{file_imp}" "#{file_imp.gsub /-tmp/, ''}"`
