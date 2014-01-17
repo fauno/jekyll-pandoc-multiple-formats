@@ -31,3 +31,4 @@ pages8 = ((pages4/2+3)/4*4).to_i
         "#{file.gsub /\.pdf$/, '-tmp.pdf'}"`
 
 `rm "#{file.gsub /\.pdf$/, '-tmp.pdf'}"`
+`mv "#{file.gsub /\.pdf$/, '-tmp.pdf'}" "#{file.gsub /-tmp/, ''}"`
