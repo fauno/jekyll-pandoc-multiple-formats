@@ -14,7 +14,7 @@ class PandocGenerator < Generator
       next if site.config['pandoc']['skip']
 
       # If there isn't a config entry for pandoc's output throw it with the rest
-      base_dir = site.config['pandoc']['output'] || site.source
+      base_dir = File.join(site.source, site.config['pandoc']['output']) || site.source
 
       site.posts.each do |post|
 
@@ -42,7 +42,8 @@ class PandocGenerator < Generator
         end
 
         # The command
-        pandoc = "pandoc #{flags} #{output_flag} #{extra_flags}"
+        # Move to the source dir since everything will be relative to # that
+        pandoc = "pushd \"#{site.config['source']}\" >/dev/null; pandoc #{flags} #{output_flag} #{extra_flags}; popd >/dev/null"
 
         # Inform what's being done
         puts pandoc
@@ -62,11 +63,21 @@ class PandocGenerator < Generator
         # Skip failed files
         next if not File.exist? filename_with_path
 
+        # If output is PDF, we also create the imposed PDF
+        if output == 'pdf' and site.config['pandoc']['impose']
+          Open3::popen3("imponer '#{filename_with_path}'") do |stdin, stdout, stderr|
+            STDERR.print stderr.read
+            STDOUT.print stdout.read
+          end
+
+          site.static_files << StaticFile.new(site, base_dir, output, filename.gsub(/\.pdf$/, '-imposed.pdf'))
+        end
+
         # Add them to the static files list
         site.static_files << StaticFile.new(site, base_dir, output, filename)
       end
     end
-  end
+    end
 end
 end
 
@@ -97,7 +108,7 @@ module JekyllPandocMultipleFormats
           flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
 
           output = ''
-          Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
+          Open3::popen3("pushd \"#{@config['source']}\" >/dev/null; pandoc -t html5 #{flags}; popd >/dev/null") do |stdin, stdout, stderr|
             stdin.puts content
             stdin.close
 

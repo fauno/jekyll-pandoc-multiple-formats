@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+file = ARGV.first
+exit if not File.exist? file
+
+# Los temporales tiene un sufijo -tmp
+file_tmp = file.gsub(/\.pdf$/, '-tmp.pdf')
+# Los definitivos -tmp-imposed
+file_imp = file.gsub(/\.pdf$/, '-tmp-imposed.pdf')
+
+# Cantidad de páginas
+pages = `pdfinfo '#{file}' | grep '^Pages:' | cut -d: -f2 | tr -d ' '`.to_i
+
+# Encontramos el múltiplo de 4 más cercano a la cantidad de páginas
+pages4 = ((pages+3)/4)*4.to_i
+# y luego el múltiplo de 4 más cercano al dividir la cantidad de páginas
+# por dos (porque cada hoja tiene dos mitades del libro)
+pages8 = ((pages4/2+3)/4*4).to_i
+
+# Creamos la imposición de páginas para A5
+`pdfjam --vanilla \
+        --outfile "#{File.dirname file}" \
+        --paper a5paper \
+        --suffix tmp \
+        --landscape \
+        --signature #{pages4} \
+        "#{file}"`
+
+# Y luego lo dividimos por la mitad y hacemos 2x2 en A4
+`pdfjam --vanilla \
+        --outfile "#{File.dirname file}" \
+        --paper a4paper \
+        --suffix imposed \
+        --no-landscape \
+        --signature #{pages8} \
+        "#{file_tmp}"`
+
+`rm -v "#{file_tmp}"`
+`mv -v "#{file_imp}" "#{file_imp.gsub /-tmp/, ''}"`
