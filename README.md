@@ -26,6 +26,7 @@ Add to `_config.yml`:
 
     pandoc:
       skip: false
+      impose: false
       output: ./tmp
       flags: '--smart --bibliography=ref.bib'
       site_flags: '--toc'
@@ -42,6 +43,8 @@ regular jekyll site build.
 
 * `outputs` is a hash of output formats (even markdown!). You can add
   output-specific flags.
+
+* `impose` creates ready to print PDFs if you're creating PDF output.
 
 **IMPORTANT**: If you were using this plugin before 2013-07-17 you have
 to change your _config.yml syntax, change pandoc.outputs from array to
