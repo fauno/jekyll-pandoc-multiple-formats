@@ -63,6 +63,16 @@ class PandocGenerator < Generator
         # Skip failed files
         next if not File.exist? filename_with_path
 
+        # If output is PDF, we also create the imposed PDF
+        if output == 'pdf' and site.config['pandoc']['impose']
+          Open3::popen3("imponer '#{filename_with_path}'") do |stdin, stdout, stderr|
+            STDERR.print stderr.read
+            STDOUT.print stdout.read
+          end
+
+          site.static_files << StaticFile.new(site, base_dir, output, filename.gsub(/\.pdf$/, '-imposed.pdf'))
+        end
+
         # Add them to the static files list
         site.static_files << StaticFile.new(site, base_dir, output, filename)
       end
