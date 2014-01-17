@@ -69,6 +69,8 @@ class PandocGenerator < Generator
             STDERR.print stderr.read
             STDOUT.print stdout.read
           end
+
+          site.static_files << StaticFile.new(site, base_dir, output, filename.gsub(/\.pdf$/, '-imposed.pdf'))
         end
 
         # Add them to the static files list
