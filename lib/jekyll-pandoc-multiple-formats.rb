@@ -110,7 +110,7 @@ module JekyllPandocMultipleFormats
           flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
 
           output = ''
-	  Dir::chdir(config['source']) do
+	  Dir::chdir(@config['source']) do
             Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
               stdin.puts content
               stdin.close
