@@ -43,7 +43,7 @@ class PandocGenerator < Generator
 
         # The command
         # Move to the source dir since everything will be relative to # that
-        pandoc = "pushd \"#{site.config['source']}\" >/dev/null; pandoc #{flags} #{output_flag} #{extra_flags}; popd >/dev/null"
+        pandoc = "bash -c 'pushd \"#{site.config['source']}\" >/dev/null; pandoc #{flags} #{output_flag} #{extra_flags}; popd >/dev/null'"
 
         # Inform what's being done
         puts pandoc
@@ -108,7 +108,7 @@ module JekyllPandocMultipleFormats
           flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
 
           output = ''
-          Open3::popen3("pushd \"#{@config['source']}\" >/dev/null; pandoc -t html5 #{flags}; popd >/dev/null") do |stdin, stdout, stderr|
+          Open3::popen3("bash -c 'pushd \"#{@config['source']}\" >/dev/null; pandoc -t html5 #{flags}; popd >/dev/null'") do |stdin, stdout, stderr|
             stdin.puts content
             stdin.close
 
