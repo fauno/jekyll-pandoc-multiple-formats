@@ -54,13 +54,13 @@ class PandocGenerator < Generator
         content << post.content
 
         # Do the stuff
-	Dir::chdir(site.config['source']) do
-	    Open3::popen3(pandoc) do |stdin, stdout, stderr|
+        Dir::chdir(site.config['source']) do
+          Open3::popen3(pandoc) do |stdin, stdout, stderr|
             stdin.puts content
             stdin.close
             STDERR.print stderr.read
           end
-	end
+        end
 
         # Skip failed files
         next if not File.exist? filename_with_path
@@ -110,7 +110,7 @@ module JekyllPandocMultipleFormats
           flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
 
           output = ''
-	  Dir::chdir(@config['source']) do
+          Dir::chdir(@config['source']) do
             Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
               stdin.puts content
               stdin.close
@@ -119,10 +119,9 @@ module JekyllPandocMultipleFormats
               STDERR.print stderr.read
 
             end
-	  end
+          end
 
           output
-
         end
 
         def matches(ext)
