@@ -43,7 +43,7 @@ class PandocGenerator < Generator
 
         # The command
         # Move to the source dir since everything will be relative to # that
-        pandoc = "pushd \"#{site.config['source']}\" >/dev/null; pandoc #{flags} #{output_flag} #{extra_flags}; popd >/dev/null"
+        pandoc = "pandoc #{flags} #{output_flag} #{extra_flags}"
 
         # Inform what's being done
         puts pandoc
@@ -54,10 +54,12 @@ class PandocGenerator < Generator
         content << post.content
 
         # Do the stuff
-        Open3::popen3(pandoc) do |stdin, stdout, stderr|
-          stdin.puts content
-          stdin.close
-          STDERR.print stderr.read
+        Dir::chdir(site.config['source']) do
+          Open3::popen3(pandoc) do |stdin, stdout, stderr|
+            stdin.puts content
+            stdin.close
+            STDERR.print stderr.read
+          end
         end
 
         # Skip failed files
@@ -108,17 +110,18 @@ module JekyllPandocMultipleFormats
           flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
 
           output = ''
-          Open3::popen3("pushd \"#{@config['source']}\" >/dev/null; pandoc -t html5 #{flags}; popd >/dev/null") do |stdin, stdout, stderr|
-            stdin.puts content
-            stdin.close
+          Dir::chdir(@config['source']) do
+            Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
+              stdin.puts content
+              stdin.close
 
-            output = stdout.read.strip
-            STDERR.print stderr.read
+              output = stdout.read.strip
+              STDERR.print stderr.read
 
+            end
           end
 
           output
-
         end
 
         def matches(ext)
