@@ -84,7 +84,13 @@ other available formats from the post itself:
 
 ## How to install
 
-Add this snippet to your `\_config.yml` on jekyll 1.3
+Download a release and expand the archive, or clone the repository from GitHub. Go
+into the generated directory and install as follows:
+
+    gem build jekyll-pandoc-multiple-formats.gemspec
+    gem install --local jekyll-pandoc-multiple-formats.gem
+
+Add this snippet to your `_config.yml` on jekyll >=1.3
 
     gems: [ 'jekyll-pandoc-multiple-formats' ]
 
