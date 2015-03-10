@@ -47,12 +47,9 @@ class PandocGenerator < Generator
 
         # Inform what's being done
         puts pandoc
-        puts "XXX #{post.data.to_yaml}"
 
         # Make the markdown header so pandoc receives metadata
         content  = "#{post.data.to_yaml}\n---\n"
-        # content  = "% #{post.data['title']}\n"
-        # content << "% #{post.data['author']}\n"
         content << post.content
 
         # Do the stuff
