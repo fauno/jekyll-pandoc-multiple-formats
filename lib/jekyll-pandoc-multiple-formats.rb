@@ -49,8 +49,7 @@ class PandocGenerator < Generator
         puts pandoc
 
         # Make the markdown header so pandoc receives metadata
-        content  = "% #{post.data['title']}\n"
-        content << "% #{post.data['author']}\n"
+        content  = "#{post.data.to_yaml}\n---\n"
         content << post.content
 
         # Do the stuff
