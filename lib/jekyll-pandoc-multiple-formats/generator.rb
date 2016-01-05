@@ -69,7 +69,9 @@ class PandocGenerator < Generator
         puts pandoc
 
         # Make the markdown header so pandoc receives metadata
-        content  = "#{post.data.to_yaml}\n---\n"
+        # TODO reject anything that's not an string, integer, array or
+        # hash
+        content  = "#{post.data.reject{|k| k == 'excerpt'}.to_yaml}\n---\n"
         content << post.content
 
         # Do the stuff
