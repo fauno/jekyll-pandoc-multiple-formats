@@ -87,9 +87,11 @@ class PandocGenerator < Generator
         # If output is PDF, we also create the imposed PDF
         if output == 'pdf' and site.config['pandoc']['impose']
 
-          imposed_file = JekyllPandocMultipleFormats::Imposition.write(filename)
+          imposed_file = JekyllPandocMultipleFormats::Imposition.new(filename_with_path, 'a5paper', 2)
 
-          site.static_files << StaticFile.new(site, base_dir, output, imposed_file)
+          if imposed_filename = imposed_file.write
+            site.static_files << StaticFile.new(site, base_dir, output, imposed_file)
+          end
         end
 
         # Add them to the static files list

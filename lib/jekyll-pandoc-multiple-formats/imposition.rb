@@ -41,22 +41,36 @@ module JekyllPandocMultipleFormats
       \\end{document}
       EOT
 
+    attr_accessor :imposed_file, :original_file, :pages, :rounded_pages, :blank_pages, :template,
+      :papersize, :nup, :extra_options
+
+    def initialize(file, papersize = 'a4paper', nup = 4, extra_options = '')
+      return unless /\.pdf\Z/ =~ file
+      return unless pdf = PDF::Info.new(file)
+
+      @original_file = File.realpath(file)
+      @imposed_file  = file.gsub(/\.pdf\Z/, '-imposed.pdf')
+      @papersize     = papersize
+      @pages         = pdf.metadata[:page_count]
+      @nup           = nup
+      @extra_options = extra_options
+      # Total pages must be modulo 4
+      @rounded_pages = round_to_nearest(@pages, 4)
+      @blank_pages   = @rounded_pages - @pages
+
+      @template = TEMPLATE
+        .gsub('@@nup@@',       @nup.to_s)
+        .gsub('@@papersize@@', @papersize)
+        .gsub('@@extra@@',     @extra_options)
+        .gsub('@@document@@',  @original_file)
+        .gsub('@@pages@@',     to_nup * ',')
+    end
+
     def round_to_nearest(int, near)
       (int + (near - 1)) / near * near
     end
 
-    def write(file, papersize = 'a4paper', nup = 4, extra_options = nil)
-      return unless /\.pdf\Z/ =~ file
-      return unless pdf = PDF::Info.new(file)
-
-      file = File.realpath(file)
-
-      # Pages
-      pages = pdf.metadata[:page_count]
-      # Total pages must be modulo 4
-      rounded_pages = round_to_nearest(pages, 4)
-      blank_pages = rounded_pages - pages
-
+    def to_nup
       # 14 pages example:
       # [ {}, 1, 2, {}, 14, 3, 4, 13, 12, 5, 6, 11, 10, 7, 8, 9 ]
       #
@@ -71,11 +85,11 @@ module JekyllPandocMultipleFormats
       # An array of numbered pages padded with blank pages ('{}')
       #
       # [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ] + [ '{}', '{}' ]
-      padded = pages.times.map{|i|i+1} + Array.new(blank_pages, '{}')
+      padded = @pages.times.map{|i|i+1} + Array.new(@blank_pages, '{}')
       # Split in halves
       # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
       #   [ 9, 10, 11, 12, 13, 14, '{}', '{}' ] ]
-      halved = padded.each_slice(rounded_pages / 2).to_a
+      halved = padded.each_slice(@rounded_pages / 2).to_a
       # Add a nil as last page.  When we reverse it and intercalate by
       # two pages, we'll have [nil, last_page] instead of
       # [last_page,second_to_last_page]
@@ -95,20 +109,15 @@ module JekyllPandocMultipleFormats
       # Create the matrix of pages (N-Up)
       #
       # ["{}", 1, "{}", 1, 2, "{}", 2, "{}", 14, 3, 14, 3, 4, 13, 4, 13, 12, 5, 12, 5, 6, 11, 6, 11, 10, 7, 10, 7, 8, 9, 8, 9]
-      nup_pages = order.each_slice(2).map{ |i| ((nup/2)-1).times { i = i+i }; i }.flatten
+      order.each_slice(2).map{ |i| ((@nup/2)-1).times { i = i+i }; i }.flatten
+    end
 
-      template = TEMPLATE.gsub('@@nup@@', nup)
-        .gsub('@@papersize@@', papersize)
-        .gsub('@@extra@@', extra_options)
-
+    def write
       # Create the imposed file
-      file_name = file.gsub(/\.pdf\Z/, '-imposed.pdf')
-      pdflatex = RTeX::Document.new(template.gsub('@@document@@', file).gsub('@@pages@@', nup_pages * ','))
+      pdflatex = RTeX::Document.new(@template)
       pdflatex.to_pdf do |pdf_file|
-        FileUtils.cp pdf_file, file_name
+        FileUtils.cp pdf_file, @imposed_file
       end
-
-      file_name
     end
   end
 end
