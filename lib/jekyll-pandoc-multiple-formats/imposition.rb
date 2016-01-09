@@ -29,41 +29,56 @@ module JekyllPandocMultipleFormats
 
     # Imposition template
     TEMPLATE = <<-EOT.gsub(/^\s+/, '')
-      \\documentclass[@@papersize@@,10pt]{article}
+      \\documentclass[@@sheetsize@@,10pt]{article}
 
       \\usepackage{pgfpages}
       \\usepackage{pdfpages}
 
-      \\pgfpagesuselayout{@@nup@@ on 1}[@@papersize@@@@extra@@]
+      \\pgfpagesuselayout{@@nup@@ on 1}[@@sheetsize@@,@@extra_options@@]
 
       \\begin{document}
         \\includepdf[pages={@@pages@@}]{@@document@@}
       \\end{document}
       EOT
 
+    SHEET_SIZES = {
+      a7paper:   2,
+      a6paper:   4,
+      a5paper:   8,
+      a4paper:  16,
+      a3paper:  32,
+      a2paper:  64,
+      a1paper: 128,
+      a0paper: 256
+    }
+
     attr_accessor :imposed_file, :original_file, :pages, :rounded_pages, :blank_pages, :template,
       :papersize, :nup, :extra_options
 
-    def initialize(file, papersize = 'a4paper', nup = 4, extra_options = '')
+    def initialize(file, papersize, sheetsize, extra_options = '')
       return unless /\.pdf\Z/ =~ file
       return unless pdf = PDF::Info.new(file)
 
       @original_file = File.realpath(file)
       @imposed_file  = file.gsub(/\.pdf\Z/, '-imposed.pdf')
-      @papersize     = papersize
+      @papersize     = papersize || 'a5paper'
+      @sheetsize     = sheetsize || 'a4paper'
       @pages         = pdf.metadata[:page_count]
-      @nup           = nup
+      @nup           = SHEET_SIZES[@sheetsize.to_sym] / SHEET_SIZES[@papersize.to_sym]
       @extra_options = extra_options
       # Total pages must be modulo 4
       @rounded_pages = round_to_nearest(@pages, 4)
       @blank_pages   = @rounded_pages - @pages
 
+      # These layouts require a landscape page
+      @extra_options << 'landscape' if [2,8,32,128].include? @nup
+
       @template = TEMPLATE
-        .gsub('@@nup@@',       @nup.to_s)
-        .gsub('@@papersize@@', @papersize)
-        .gsub('@@extra@@',     @extra_options)
-        .gsub('@@document@@',  @original_file)
-        .gsub('@@pages@@',     to_nup * ',')
+        .gsub('@@nup@@',           @nup.to_s)
+        .gsub('@@sheetsize@@',     @sheetsize)
+        .gsub('@@extra_options@@', @extra_options)
+        .gsub('@@document@@',      @original_file)
+        .gsub('@@pages@@',         to_nup * ',')
     end
 
     def round_to_nearest(int, near)
@@ -109,7 +124,7 @@ module JekyllPandocMultipleFormats
       # Create the matrix of pages (N-Up)
       #
       # ["{}", 1, "{}", 1, 2, "{}", 2, "{}", 14, 3, 14, 3, 4, 13, 4, 13, 12, 5, 12, 5, 6, 11, 6, 11, 10, 7, 10, 7, 8, 9, 8, 9]
-      order.each_slice(2).map{ |i| ((@nup/2)-1).times { i = i+i }; i }.flatten
+      order.each_slice(2).map{ |i| a=[]; (@nup/2).times { a = a+i }; a }.flatten
     end
 
     def write
