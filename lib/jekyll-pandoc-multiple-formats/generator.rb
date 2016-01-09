@@ -26,13 +26,14 @@ module Jekyll
 class PandocGenerator < Generator
   def generate(site)
     config  = site.config['pandoc']
+
+    return if config['skip']
+
     outputs = config['outputs']
     flags   = config['flags']
 
     outputs.each_pair do |output, extra_flags|
 
-      # Skip conversion if we're skipping, but still cleanup the outputs hash
-      next if config['skip']
 
       # If there isn't a config entry for pandoc's output throw it with the rest
       base_dir = File.join(site.source, config['output']) || site.source
@@ -46,7 +47,7 @@ class PandocGenerator < Generator
 
         filename = post.url.gsub(/\.html$/, ".#{output}")
         # Have a filename!
-        filename = "#{post.url.gsub(/\//, "-").gsub(/-$/, "")}.#{output}" if filename =~ /\/$/
+        filename = "#{post.url.gsub(/\//, '-').gsub(/-$/, '')}.#{output}" if filename =~ /\/$/
 
         filename_with_path = File.join(base_dir, output, filename)
 
@@ -58,12 +59,12 @@ class PandocGenerator < Generator
         end
 
         # Add cover if epub
-        if output == "epub" and not post.data['cover'].nil?
-          output_flag << " --epub-cover-image=#{post.data['cover']}"
+        if output == 'epub' and not post.data['cover'].nil?
+          output_flag << ' --epub-cover-image='
+          output_flag << {post.data['cover']}
         end
 
         # The command
-        # Move to the source dir since everything will be relative to # that
         pandoc = "pandoc #{flags} #{output_flag} #{extra_flags}"
 
         # Inform what's being done
@@ -75,8 +76,9 @@ class PandocGenerator < Generator
         content  = "#{post.data.reject{|k| k == 'excerpt'}.to_yaml}\n---\n"
         content << post.content
 
-        # Do the stuff
+        # Move to the source dir since everything will be relative to # that
         Dir::chdir(site.config['source']) do
+          # Do the stuff
           Open3::popen3(pandoc) do |stdin, stdout, stderr|
             stdin.puts content
             stdin.close
@@ -85,7 +87,7 @@ class PandocGenerator < Generator
         end
 
         # Skip failed files
-        next if not File.exist? filename_with_path
+        next unless File.exist? filename_with_path
 
         # If output is PDF, we also create the imposed PDF
         if output == 'pdf' and config['impose']['skip']
