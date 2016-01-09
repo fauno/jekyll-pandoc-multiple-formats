@@ -25,16 +25,17 @@ module Jekyll
 
 class PandocGenerator < Generator
   def generate(site)
-    outputs = site.config['pandoc']['outputs']
-    flags  = site.config['pandoc']['flags']
+    config  = site.config['pandoc']
+    outputs = config['outputs']
+    flags   = config['flags']
 
     outputs.each_pair do |output, extra_flags|
 
       # Skip conversion if we're skipping, but still cleanup the outputs hash
-      next if site.config['pandoc']['skip']
+      next if config['skip']
 
       # If there isn't a config entry for pandoc's output throw it with the rest
-      base_dir = File.join(site.source, site.config['pandoc']['output']) || site.source
+      base_dir = File.join(site.source, config['output']) || site.source
 
       site.posts.each do |post|
 
@@ -87,7 +88,7 @@ class PandocGenerator < Generator
         next if not File.exist? filename_with_path
 
         # If output is PDF, we also create the imposed PDF
-        if output == 'pdf' and site.config['pandoc']['impose']
+        if output == 'pdf' and config['impose']['skip']
 
           imposed_file = JekyllPandocMultipleFormats::Imposition.new(filename_with_path, 'a5paper', 2)
 
