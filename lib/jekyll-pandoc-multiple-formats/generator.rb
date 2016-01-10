@@ -64,6 +64,14 @@ class PandocGenerator < Generator
           output_flag << post.data['cover']
         end
 
+        if output == 'pdf'
+          post.data['papersize'] ||= config['papersize']
+          post.data['sheetsize'] ||= config['sheetsize']
+
+          output_flag << ' -V papersize='
+          output_flag << post.data['papersize']
+        end
+
         # The command
         pandoc = "pandoc #{flags} #{output_flag} #{extra_flags}"
 
@@ -90,9 +98,10 @@ class PandocGenerator < Generator
         next unless File.exist? filename_with_path
 
         # If output is PDF, we also create the imposed PDF
-        if output == 'pdf' and config['impose']['skip']
+        if output == 'pdf' and config['imposition']
 
-          imposed_file = JekyllPandocMultipleFormats::Imposition.new(filename_with_path, 'a5paper', 2)
+          imposed_file = JekyllPandocMultipleFormats::Imposition
+            .new(filename_with_path, post.data['papersize'], post.data['sheetsize'])
 
           if imposed_filename = imposed_file.write
             site.static_files << StaticFile.new(site, base_dir, output, imposed_file)
