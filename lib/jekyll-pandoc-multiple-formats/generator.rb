@@ -61,7 +61,7 @@ class PandocGenerator < Generator
         # Add cover if epub
         if output == 'epub' and not post.data['cover'].nil?
           output_flag << ' --epub-cover-image='
-          output_flag << {post.data['cover']}
+          output_flag << post.data['cover']
         end
 
         # The command
