@@ -68,9 +68,6 @@ class PandocGenerator < Generator
           post.data['papersize'] ||= config['papersize']
           post.data['sheetsize'] ||= config['sheetsize']
 
-          output_flag << ' -V papersize='
-          output_flag << post.data['papersize']
-
           if config['date_format']
             post.data['date'] = post.data['date'].strftime(config['date_format'])
           else
