@@ -67,6 +67,7 @@ class PandocGenerator < Generator
         if output == 'pdf'
           post.data['papersize'] ||= config['papersize']
           post.data['sheetsize'] ||= config['sheetsize']
+          post.data['signature'] ||= config['signature']
 
           if config['date_format']
             post.data['date'] = post.data['date'].strftime(config['date_format'])
@@ -104,7 +105,8 @@ class PandocGenerator < Generator
         if output == 'pdf' and config['imposition']
 
           imposed_file = JekyllPandocMultipleFormats::Imposition
-            .new(filename_with_path, post.data['papersize'], post.data['sheetsize'])
+            .new(filename_with_path, post.data['papersize'],
+            post.data['sheetsize'], post.data['signature'])
 
           if imposed_filename = imposed_file.write
             site.static_files << StaticFile.new(site, base_dir, output, imposed_file)
