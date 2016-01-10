@@ -55,7 +55,7 @@ module JekyllPandocMultipleFormats
     attr_accessor :imposed_file, :original_file, :pages, :rounded_pages, :blank_pages, :template,
       :papersize, :nup, :extra_options
 
-    def initialize(file, papersize, sheetsize, extra_options = '')
+    def initialize(file, papersize = nil, sheetsize = nil, signature = nil, extra_options = nil)
       return unless /\.pdf\Z/ =~ file
       return unless pdf = PDF::Info.new(file)
 
@@ -65,10 +65,12 @@ module JekyllPandocMultipleFormats
       @sheetsize     = sheetsize || 'a4paper'
       @pages         = pdf.metadata[:page_count]
       @nup           = SHEET_SIZES[@sheetsize.to_sym] / SHEET_SIZES[@papersize.to_sym]
-      @extra_options = extra_options
+      @extra_options = extra_options || ''
       # Total pages must be modulo 4
       @rounded_pages = round_to_nearest(@pages, 4)
       @blank_pages   = @rounded_pages - @pages
+      # If we don't use a signature, make a single fold
+      @signature     = signature || @rounded_pages
 
       # These layouts require a landscape page
       @extra_options << 'landscape' if [2,8,32,128].include? @nup
@@ -101,30 +103,41 @@ module JekyllPandocMultipleFormats
       #
       # [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ] + [ '{}', '{}' ]
       padded = @pages.times.map{|i|i+1} + Array.new(@blank_pages, '{}')
-      # Split in halves
-      # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
-      #   [ 9, 10, 11, 12, 13, 14, '{}', '{}' ] ]
-      halved = padded.each_slice(@rounded_pages / 2).to_a
-      # Add a nil as last page.  When we reverse it and intercalate by
-      # two pages, we'll have [nil, last_page] instead of
-      # [last_page,second_to_last_page]
-      #
-      # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
-      #   [ 9, 10, 11, 12, 13, 14, '{}', '{}', nil ] ]
-      halved.last << nil
-      # Reverse the second half and intercalate by two pages into the
-      # first one.  Then remove nil elements and flatten the array.
-      #
-      # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
-      #   [ nil, '{}', '{}', 14, 13, 12, 11, 10 ] ]
-      #
-      # [ {}, 1, 2, {}, 14, 3, 4, 13, 12, 5, 6, 11, 10, 7, 8, 9 ]
-      order = halved.last.reverse.each_slice(2).zip(halved.first.each_slice(2).to_a).flatten.compact
 
-      # Create the matrix of pages (N-Up)
+      # If we have a signature, we have to split in groups up to the
+      # amount of pages per signature, and then continue with the rest
+      #
+      # If we have no signature, we assume it's equal to the total
+      # amount of pages, so you only have one fold
+      signed = padded.each_slice(@signature).to_a
+      folds = []
+      signed.each do |fold|
+        #
+        # Split in halves
+        # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
+        #   [ 9, 10, 11, 12, 13, 14, '{}', '{}' ] ]
+        halved = fold.each_slice(@signature / 2).to_a
+        # Add a nil as last page.  When we reverse it and intercalate by
+        # two pages, we'll have [nil, last_page] instead of
+        # [last_page,second_to_last_page]
+        #
+        # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
+        #   [ 9, 10, 11, 12, 13, 14, '{}', '{}', nil ] ]
+        halved.last << nil
+        # Reverse the second half and intercalate by two pages into the
+        # first one.  Then remove nil elements and flatten the array.
+        #
+        # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
+        #   [ nil, '{}', '{}', 14, 13, 12, 11, 10 ] ]
+        #
+        # [ {}, 1, 2, {}, 14, 3, 4, 13, 12, 5, 6, 11, 10, 7, 8, 9 ]
+        folds << halved.last.reverse.each_slice(2).zip(halved.first.each_slice(2).to_a).flatten.compact
+      end
+
+      # Create the matrix of pages (N-Up) per fold
       #
       # ["{}", 1, "{}", 1, 2, "{}", 2, "{}", 14, 3, 14, 3, 4, 13, 4, 13, 12, 5, 12, 5, 6, 11, 6, 11, 10, 7, 10, 7, 8, 9, 8, 9]
-      order.each_slice(2).map{ |i| a=[]; (@nup/2).times { a = a+i }; a }.flatten
+      folds.map { |o| o.each_slice(2).map{ |i| a=[]; (@nup/2).times { a = a+i }; a }}.flatten
     end
 
     def write
