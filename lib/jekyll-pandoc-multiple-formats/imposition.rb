@@ -21,70 +21,20 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-require 'pdf/info'
-require 'rtex'
-
 module JekyllPandocMultipleFormats
-  class Imposition
-
-    # Imposition template
-    TEMPLATE = <<-EOT.gsub(/^\s+/, '')
-      \\documentclass[@@sheetsize@@,10pt]{article}
-
-      \\usepackage{pgfpages}
-      \\usepackage{pdfpages}
-
-      \\pgfpagesuselayout{@@nup@@ on 1}[@@sheetsize@@,@@extra_options@@]
-
-      \\begin{document}
-        \\includepdf[pages={@@pages@@}]{@@document@@}
-      \\end{document}
-      EOT
-
-    SHEET_SIZES = {
-      a7paper:   2,
-      a6paper:   4,
-      a5paper:   8,
-      a4paper:  16,
-      a3paper:  32,
-      a2paper:  64,
-      a1paper: 128,
-      a0paper: 256
-    }
-
-    attr_accessor :imposed_file, :original_file, :pages, :rounded_pages, :blank_pages, :template,
-      :papersize, :nup, :extra_options
+  class Imposition < Printer
 
     def initialize(file, papersize = nil, sheetsize = nil, signature = nil, extra_options = nil)
-      return unless /\.pdf\Z/ =~ file
-      return unless pdf = PDF::Info.new(file)
-
-      @original_file = File.realpath(file)
-      @imposed_file  = file.gsub(/\.pdf\Z/, '-imposed.pdf')
-      @papersize     = papersize || 'a5paper'
-      @sheetsize     = sheetsize || 'a4paper'
-      @pages         = pdf.metadata[:page_count]
-      @nup           = SHEET_SIZES[@sheetsize.to_sym] / SHEET_SIZES[@papersize.to_sym]
-      @extra_options = extra_options || ''
+      super(file, papersize, sheetsize, extra_options)
+      @output_file   = file.gsub(/\.pdf\Z/, '-imposed.pdf')
       # Total pages must be modulo 4
       @rounded_pages = round_to_nearest(@pages, 4)
       @blank_pages   = @rounded_pages - @pages
       # If we don't use a signature, make a single fold
       @signature     = signature || @rounded_pages
 
-      # These layouts require a landscape page
-      @extra_options << 'landscape' if [2,8,32,128].include? @nup
-
-      @template = TEMPLATE
-        .gsub('@@nup@@',           @nup.to_s)
-        .gsub('@@sheetsize@@',     @sheetsize)
-        .gsub('@@extra_options@@', @extra_options)
-        .gsub('@@document@@',      @original_file)
-        .gsub('@@pages@@',         to_nup * ',')
-    end
-
-    def round_to_nearest(int, near)
-      (int + (near - 1)) / near * near
+      render_template
+      self
     end
 
     def to_nup
@@ -138,14 +88,6 @@ module JekyllPandocMultipleFormats
       #
       # ["{}", 1, "{}", 1, 2, "{}", 2, "{}", 14, 3, 14, 3, 4, 13, 4, 13, 12, 5, 12, 5, 6, 11, 6, 11, 10, 7, 10, 7, 8, 9, 8, 9]
       folds.map { |o| o.each_slice(2).map{ |i| a=[]; (@nup/2).times { a = a+i }; a }}.flatten
-    end
-
-    def write
-      # Create the imposed file
-      pdflatex = RTeX::Document.new(@template)
-      pdflatex.to_pdf do |pdf_file|
-        FileUtils.cp pdf_file, @imposed_file
-      end
     end
   end
 end
