@@ -112,6 +112,17 @@ class PandocGenerator < Generator
             site.static_files << StaticFile.new(site, base_dir, output, imposed_file)
           end
         end
+        #
+        # If output is PDF, we also create the imposed PDF
+        if output == 'pdf' and config['binder']
+
+          binder_file = JekyllPandocMultipleFormats::Binder
+            .new(filename_with_path, post.data['papersize'], post.data['sheetsize'])
+
+          if binder_filename = binder_file.write
+            site.static_files << StaticFile.new(site, base_dir, output, binder_file)
+          end
+        end
 
         # Add them to the static files list
         site.static_files << StaticFile.new(site, base_dir, output, filename)
