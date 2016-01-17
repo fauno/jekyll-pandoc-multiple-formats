@@ -50,7 +50,7 @@ module JekyllPandocMultipleFormats
       a0paper: 256
     }
 
-    attr_accessor :output_file, :original_file, :pages, :rounded_pages, :blank_pages, :template,
+    attr_accessor :output_file, :original_file, :pages, :template,
       :papersize, :sheetsize, :nup, :extra_options
 
     def initialize(file, papersize = nil, sheetsize = nil, extra_options = nil)
@@ -76,6 +76,8 @@ module JekyllPandocMultipleFormats
       pdflatex.to_pdf do |pdf_file|
         FileUtils.cp pdf_file, @output_file
       end
+
+      File.exists? @output_file
     end
 
     def is_landscape?

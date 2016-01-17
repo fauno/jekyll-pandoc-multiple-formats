@@ -24,6 +24,8 @@
 module JekyllPandocMultipleFormats
   class Imposition < Printer
 
+    attr_accessor :rounded_pages, :blank_pages, :signature
+
     def initialize(file, papersize = nil, sheetsize = nil, signature = nil, extra_options = nil)
       super(file, papersize, sheetsize, extra_options)
       @output_file   = file.gsub(/\.pdf\Z/, '-imposed.pdf')

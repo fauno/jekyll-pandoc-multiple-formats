@@ -24,4 +24,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency('jekyll')
   gem.add_dependency('pdf_info')
   gem.add_dependency('rtex')
+  gem.add_development_dependency('rake')
+  gem.add_development_dependency('minitest')
+  gem.add_development_dependency('shoulda')
 end
