@@ -27,6 +27,7 @@ module Jekyll
 
 
     attr_reader :format, :site, :config, :flags, :posts, :slug, :title, :url
+    attr_reader :papersize, :sheetsize, :signature
 
     def initialize(site, format, posts, title = nil)
       @site   = site
@@ -70,7 +71,7 @@ module Jekyll
         @posts.first.url.gsub(/\.html$/, ".#{@format}")
       else
         URL.new({
-          template: @config['permalink'],
+          template: @config['bundle_permalink'],
           placeholders: url_placeholders,
           permalink: nil }).to_s
       end
@@ -91,9 +92,7 @@ module Jekyll
           @posts.first.data.delete('date')
         end
 
-        %w[papersize sheetsize signature].each do |option|
-          @posts.first.data[option] ||= @config[option]
-        end
+        Jekyll::Utils.deep_merge_hashes! @posts.first.data, @config
 
         # we extract the excerpt because it serializes as an object and
         # breaks pandoc
@@ -103,8 +102,9 @@ module Jekyll
           date: @config['date_format'] ? Date.today.strftime(@config['date_format']) : nil,
           title: @title,
           author: nil,
-          papersize: @config['papersize'],
-          sheetsize: @config['sheetsize'],
+          papersize: papersize,
+          sheetsize: sheetsize,
+          signature: signature
         }
       end
 
@@ -119,17 +119,21 @@ module Jekyll
     end
 
     def write
+      puts "Writing #{path}"
       FileUtils.mkdir_p(File.dirname(path))
       # Remove the file before creating it
       FileUtils.rm_f(path)
       # Move to the source dir since everything will be relative to that
       Dir::chdir(@site.config['source']) do
         # Do the stuff
-        Open3::popen3(do_command) do |stdin, stdout, stderr|
+        Open3::popen3(do_command) do |stdin, stdout, stderr, thread|
           stdin.puts yaml_metadata
           stdin.puts content
           stdin.close
           STDERR.print stderr.read
+
+          # Wait for the process to finish
+          thread.value
         end
       end
 
@@ -183,6 +187,28 @@ module Jekyll
 
     def has_cover?
       @posts.any? { |p| p.data.key? 'cover' }
+    end
+
+    def papersize
+      @papersize ||= find_option 'papersize'
+    end
+
+    def sheetsize
+      @sheetsize ||= find_option 'sheetsize'
+    end
+
+    def signature
+      @signature ||= find_option 'signature'
+    end
+
+    private
+
+    def find_option(name)
+      if @posts.any? { |p| p.data.key? name }
+        @posts.select { |p| p.data.key? name }.first.data[name]
+      else
+        @config[name]
+      end
     end
   end
 end

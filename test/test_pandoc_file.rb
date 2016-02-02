@@ -53,6 +53,14 @@ class TestPandocFile < MiniTest::Test
       refute @pandoc_file.cover
     end
 
+    should 'have a papersize' do
+      refute @pandoc_file.papersize.empty?
+    end
+
+    should 'have a sheetsize' do
+      refute @pandoc_file.sheetsize.empty?
+    end
+
     should 'have flags' do
       assert @pandoc_file.do_flags.is_a?(String)
       assert @pandoc_file.do_flags.length > 0

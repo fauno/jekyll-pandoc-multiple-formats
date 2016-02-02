@@ -39,6 +39,7 @@ module JekyllPandocMultipleFormats
       \\end{document}
       EOT
 
+    # TODO allow custom sheet sizes
     SHEET_SIZES = {
       a7paper:   2,
       a6paper:   4,
