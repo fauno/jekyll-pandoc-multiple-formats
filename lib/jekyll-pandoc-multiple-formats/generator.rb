@@ -24,108 +24,39 @@
 module Jekyll
 
 class PandocGenerator < Generator
+  safe true
+
+  attr_accessor :site, :config
+
   def generate(site)
-    config  = site.config['pandoc']
+    @site     ||= site
+    @config   ||= JekyllPandocMultipleFormats::Config.new(@site.config['pandoc'])
 
-    return if config['skip']
+    return if @config.skip?
 
-    outputs = config['outputs']
-    flags   = config['flags']
+    @config.outputs.each_pair do |output, extra_flags|
+      @site.posts.docs.each do |post|
 
-    outputs.each_pair do |output, extra_flags|
-
-
-      # If there isn't a config entry for pandoc's output throw it with the rest
-      base_dir = File.join(site.source, config['output']) || site.source
-
-      site.posts.each do |post|
-
-        post_path = File.join(base_dir, output, File.dirname(post.url))
-
-        puts "Creating #{post_path}"
-        FileUtils.mkdir_p(post_path)
-
-        filename = post.url.gsub(/\.html$/, ".#{output}")
-        # Have a filename!
-        filename = "#{post.url.gsub(/\//, '-').gsub(/-$/, '')}.#{output}" if filename =~ /\/$/
-
-        filename_with_path = File.join(base_dir, output, filename)
-
-        # Special cases, stdout is disabled for these
-        if ['pdf', 'epub', 'odt', 'docx'].include?(output)
-          output_flag = "-o #{filename_with_path}"
-        else
-          output_flag = "-t #{output} -o #{filename_with_path}"
-        end
-
-        # Add cover if epub
-        if output == 'epub' and not post.data['cover'].nil?
-          output_flag << ' --epub-cover-image='
-          output_flag << post.data['cover']
-        end
-
-        if output == 'pdf'
-          post.data['papersize'] ||= config['papersize']
-          post.data['sheetsize'] ||= config['sheetsize']
-          post.data['signature'] ||= config['signature']
-
-          if config['date_format']
-            post.data['date'] = post.data['date'].strftime(config['date_format'])
-          else
-            post.data.delete('date')
-          end
-        end
-
-        # The command
-        pandoc = "pandoc #{flags} #{output_flag} #{extra_flags}"
-
-        # Inform what's being done
-        puts pandoc
-
-        # Make the markdown header so pandoc receives metadata
-        # TODO reject anything that's not an string, integer, array or
-        # hash
-        content  = "#{post.data.reject{|k| k == 'excerpt'}.to_yaml}\n---\n"
-        content << post.content
-
-        # Move to the source dir since everything will be relative to # that
-        Dir::chdir(site.config['source']) do
-          # Do the stuff
-          Open3::popen3(pandoc) do |stdin, stdout, stderr|
-            stdin.puts content
-            stdin.close
-            STDERR.print stderr.read
-          end
-        end
-
-        # Skip failed files
-        next unless File.exist? filename_with_path
+        file = PandocFile.new(@site, output, post)
+        next unless file.write
 
         # If output is PDF, we also create the imposed PDF
-        if output == 'pdf' and config['imposition']
+        if file.pdf? and @config.imposition?
 
           imposed_file = JekyllPandocMultipleFormats::Imposition
-            .new(filename_with_path, post.data['papersize'],
-            post.data['sheetsize'], post.data['signature'])
+            .new(file.path, file.papersize, file.sheetsize, file.signature)
 
-          if imposed_filename = imposed_file.write
-            site.static_files << StaticFile.new(site, base_dir, output, imposed_file)
-          end
+           imposed_file.write
         end
-        #
+
         # If output is PDF, we also create the imposed PDF
-        if output == 'pdf' and config['binder']
+        if file.pdf? and @config.binder?
 
           binder_file = JekyllPandocMultipleFormats::Binder
-            .new(filename_with_path, post.data['papersize'], post.data['sheetsize'])
+            .new(file.path, file.papersize, file.sheetsize)
 
-          if binder_filename = binder_file.write
-            site.static_files << StaticFile.new(site, base_dir, output, binder_file)
-          end
+          binder_file.write
         end
-
-        # Add them to the static files list
-        site.static_files << StaticFile.new(site, base_dir, output, filename)
       end
     end
     end
