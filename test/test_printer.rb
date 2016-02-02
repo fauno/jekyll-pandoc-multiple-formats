@@ -1,15 +1,4 @@
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-$LOAD_PATH.unshift(File.dirname(__FILE__))
-
-TEST_PDF = File.join(File.dirname(__FILE__),'fixtures/test.pdf')
-TEST_IMPOSED_PDF = File.join(File.dirname(__FILE__),'fixtures/test-imposed.pdf')
-TEST_BINDER_PDF = File.join(File.dirname(__FILE__),'fixtures/test-binder.pdf')
-
-require 'rubygems'
-require 'minitest/autorun'
-require 'shoulda'
-require 'jekyll'
-require 'jekyll-pandoc-multiple-formats'
+require 'test_helper'
 
 class TestJekyllPandocMultipleFormats < MiniTest::Test
   context 'imposition' do

@@ -22,9 +22,15 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 require 'open3'
+
 require 'jekyll-pandoc-multiple-formats/version'
+require 'jekyll-pandoc-multiple-formats/config'
+
+# TODO this may go to a separate gem
 require 'jekyll-pandoc-multiple-formats/printer'
 require 'jekyll-pandoc-multiple-formats/imposition'
 require 'jekyll-pandoc-multiple-formats/binder'
+
+require 'jekyll-pandoc-multiple-formats/pandoc_file'
 require 'jekyll-pandoc-multiple-formats/generator'
 require 'jekyll-pandoc-multiple-formats/converter'
