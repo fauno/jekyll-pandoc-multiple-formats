@@ -78,6 +78,21 @@ class TestPandocFile < MiniTest::Test
 
     should 'have a title' do
       assert_raises(ArgumentError) { Jekyll::PandocFile.new(@site, 'pdf', @site.posts.docs) }
+      refute @pandoc_file.title.empty?
+    end
+
+    should 'have a path' do
+      assert @pandoc_file.path.end_with?("#{@pandoc_file.slug}.#{@pandoc_file.format}")
+    end
+
+    should 'have metadata in yaml format' do
+      assert @pandoc_file.yaml_metadata.start_with?('---')
+      assert @pandoc_file.yaml_metadata.end_with?("---\n")
+    end
+
+    should 'create a file' do
+      assert @pandoc_file.write
+      assert File.exists?(@pandoc_file.path)
     end
   end
 end
