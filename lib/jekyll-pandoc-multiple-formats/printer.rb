@@ -52,7 +52,7 @@ module JekyllPandocMultipleFormats
     }
 
     attr_accessor :output_file, :original_file, :pages, :template,
-      :papersize, :sheetsize, :nup, :extra_options
+      :papersize, :sheetsize, :nup, :extra_options, :relative_path
 
     def initialize(file, papersize = nil, sheetsize = nil, extra_options = nil)
       return unless /\.pdf\Z/ =~ file
@@ -69,6 +69,10 @@ module JekyllPandocMultipleFormats
       @extra_options << 'landscape' if is_landscape?
 
       self
+    end
+
+    def relative_path(from)
+      @relative_path ||= Pathname.new(output_file).relative_path_from(Pathname.new(from)).to_s
     end
 
     def write
