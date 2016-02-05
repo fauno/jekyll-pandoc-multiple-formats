@@ -34,35 +34,54 @@ class PandocGenerator < Generator
 
     return if @config.skip?
 
+    # we create a single array of files
+    @pandoc_files = []
+
     @config.outputs.each_pair do |output, extra_flags|
       @site.posts.docs.each do |post|
 
-        file = PandocFile.new(@site, output, post)
-        next unless file.write
+        pandoc_file = PandocFile.new(@site, output, post)
+        next unless pandoc_file.write
 
-        @site.keep_files << file.relative_path
+        @site.keep_files << pandoc_file.relative_path
+        @pandoc_files << pandoc_file
+      end
 
-        # If output is PDF, we also create the imposed PDF
-        if file.pdf? and @config.imposition?
+      @site.post_attr_hash('categories').each_pair do |title, posts|
+        pandoc_file = PandocFile.new(@site, output, posts, title)
+        next unless pandoc_file.write
+
+        @site.keep_files << pandoc_file.relative_path
+        @pandoc_files << pandoc_file
+      end
+    end
+
+    @pandoc_files.each do |pandoc_file|
+      # If output is PDF, we also create the imposed PDF
+      if pandoc_file.pdf?
+
+        if @config.imposition?
 
           imposed_file = JekyllPandocMultipleFormats::Imposition
-            .new(file.path, file.papersize, file.sheetsize, file.signature)
+            .new(pandoc_file.path, pandoc_file.papersize,
+            pandoc_file.sheetsize, pandoc_file.signature)
 
           imposed_file.write
           @site.keep_files << imposed_file.relative_path(@site.dest)
         end
 
         # If output is PDF, we also create the imposed PDF
-        if file.pdf? and @config.binder?
+        if @config.binder?
 
           binder_file = JekyllPandocMultipleFormats::Binder
-            .new(file.path, file.papersize, file.sheetsize)
+            .new(pandoc_file.path, pandoc_file.papersize,
+            pandoc_file.sheetsize)
 
           binder_file.write
           @site.keep_files << binder_file.relative_path(@site.dest)
         end
       end
     end
-    end
+  end
 end
 end
