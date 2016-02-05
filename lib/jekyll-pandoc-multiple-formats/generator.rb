@@ -40,13 +40,16 @@ class PandocGenerator < Generator
         file = PandocFile.new(@site, output, post)
         next unless file.write
 
+        @site.keep_files << file.relative_path
+
         # If output is PDF, we also create the imposed PDF
         if file.pdf? and @config.imposition?
 
           imposed_file = JekyllPandocMultipleFormats::Imposition
             .new(file.path, file.papersize, file.sheetsize, file.signature)
 
-           imposed_file.write
+          imposed_file.write
+          @site.keep_files << imposed_file.relative_path(@site.dest)
         end
 
         # If output is PDF, we also create the imposed PDF
@@ -56,6 +59,7 @@ class PandocGenerator < Generator
             .new(file.path, file.papersize, file.sheetsize)
 
           binder_file.write
+          @site.keep_files << binder_file.relative_path(@site.dest)
         end
       end
     end

@@ -62,8 +62,8 @@ class TestPandocFile < MiniTest::Test
     end
 
     should 'have flags' do
-      assert @pandoc_file.do_flags.is_a?(String)
-      assert @pandoc_file.do_flags.length > 0
+      assert @pandoc_file.flags.is_a?(String)
+      assert @pandoc_file.flags.length > 0
     end
 
     should 'create a file' do
