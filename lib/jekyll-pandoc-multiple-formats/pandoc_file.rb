@@ -51,7 +51,11 @@ module Jekyll
 
     def path
       # path is full destination path with all elements of permalink
-      path = @site.in_dest_dir(URL.unescape_path(url))
+      path = @site.in_dest_dir(relative_path)
+    end
+
+    def relative_path
+      path = URL.unescape_path(url)
 
       # but if the post is going to be index.html, use slug + format
       # (ie /year/month/slug/slug.pdf)
@@ -68,7 +72,7 @@ module Jekyll
     # otherwise we use the permalink template with some placeholder
     def url
       @url = if single_post?
-        @posts.first.url.gsub(/\.html$/, ".#{@format}")
+        single_post.url.gsub(/\.html$/, ".#{@format}")
       else
         URL.new({
           template: @config['bundle_permalink'],
@@ -87,25 +91,37 @@ module Jekyll
     def yaml_metadata
       if single_post?
         if @config['date_format']
-          @posts.first.data['date'] = @posts.first.data['date'].strftime(@config['date_format'])
+          single_post.data['date'] = single_post.data['date'].strftime(@config['date_format'])
         else
-          @posts.first.data.delete('date')
+          single_post.data.delete('date')
         end
 
-        Jekyll::Utils.deep_merge_hashes! @posts.first.data, @config
+        # if we were to merge config to data, the default options would
+        # take precedence
+        data = Jekyll::Utils.deep_merge_hashes @config, single_post.data
+        single_post.merge_data! data
+
 
         # we extract the excerpt because it serializes as an object and
         # breaks pandoc
-        metadata = @posts.first.data.reject{ |k| k == 'excerpt' }
+        metadata = single_post.data.reject{ |k| k == 'excerpt' }
       else
+        # we have to use this fugly syntax because jekyll doesn't do
+        # symbols
         metadata = {
-          date: @config['date_format'] ? Date.today.strftime(@config['date_format']) : nil,
-          title: @title,
-          author: nil,
-          papersize: papersize,
-          sheetsize: sheetsize,
-          signature: signature
+          'date'      => @config['date_format'] ? Date.today.strftime(@config['date_format']) : nil,
+          'title'     => @title,
+          'author'    => nil,
+          'papersize' => papersize,
+          'sheetsize' => sheetsize,
+          'signature' => signature
         }
+      end
+
+      # fix page sizes, pandoc uses 'A4' while printer.rb uses
+      # 'a4paper'
+      %w[papersize sheetsize].each do |size|
+        metadata[size] = fix_size metadata[size]
       end
 
       metadata.to_yaml << "\n---\n"
@@ -119,14 +135,13 @@ module Jekyll
     end
 
     def write
-      puts "Writing #{path}"
       FileUtils.mkdir_p(File.dirname(path))
       # Remove the file before creating it
       FileUtils.rm_f(path)
       # Move to the source dir since everything will be relative to that
       Dir::chdir(@site.config['source']) do
         # Do the stuff
-        Open3::popen3(do_command) do |stdin, stdout, stderr, thread|
+        Open3::popen3(command) do |stdin, stdout, stderr, thread|
           stdin.puts yaml_metadata
           stdin.puts content
           stdin.close
@@ -144,7 +159,9 @@ module Jekyll
       @posts.select { |p| p.data.key? 'cover' }.first.data['cover'] if has_cover?
     end
 
-    def do_flags
+    def flags
+      return @flags.join ' ' unless @flags.empty?
+
       @flags << @config['flags']
       @flags << @config['outputs'][@format] if @config['outputs'].key?(@format)
       @flags << '-o'
@@ -164,8 +181,8 @@ module Jekyll
       @flags.join ' '
     end
 
-    def do_command
-      'pandoc ' << do_flags
+    def command
+      'pandoc ' << flags
     end
 
     def pdf?
@@ -203,12 +220,20 @@ module Jekyll
 
     private
 
+    def single_post
+      @posts.first
+    end
+
     def find_option(name)
       if @posts.any? { |p| p.data.key? name }
         @posts.select { |p| p.data.key? name }.first.data[name]
       else
         @config[name]
       end
+    end
+
+    def fix_size(size)
+      size.gsub /paper$/, ''
     end
   end
 end
