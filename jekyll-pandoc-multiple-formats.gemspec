@@ -22,9 +22,9 @@ Gem::Specification.new do |gem|
   gem.require_paths = ['lib']
 
   gem.add_dependency('jekyll', '~> 3.0.0')
-  gem.add_dependency('pdf_info')
-  gem.add_dependency('rtex')
-  gem.add_development_dependency('rake')
-  gem.add_development_dependency('minitest')
-  gem.add_development_dependency('shoulda')
+  gem.add_dependency('pdf_info', '~> 0.5.0')
+  gem.add_dependency('rtex', '~> 2.1.0')
+  gem.add_development_dependency('rake', '~> 10.5.0')
+  gem.add_development_dependency('minitest', '~> 5.8.0')
+  gem.add_development_dependency('shoulda', '~> 3.5.0')
 end
