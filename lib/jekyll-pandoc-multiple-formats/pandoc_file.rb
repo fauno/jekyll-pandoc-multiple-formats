@@ -128,10 +128,20 @@ module Jekyll
     end
 
     def content
-      @posts.map do |post|
-        # remove bibliography titles
-        post.content.gsub(/^#+.*\n*\Z/, '').gsub(/^.*\n[=-]+\n*\Z/, '')
-      end.join "\n\n\n"
+      if single_post?
+        single_post.content
+      else
+        header_re = /^(#+.*\n*|.*\n[=-]+\n*)\Z/
+        bib_title = ""
+        @posts.map do |post|
+          bib_title = post.content.match(header_re).to_s if bib_title.empty?
+          # remove bibliography titles
+          # since pandoc does it's own bibliography output, it recommends
+          # leaving an empty chapter title to mark it as such
+          post.content.gsub(header_re, '')
+        # we add the first bibliography title we can find in the end
+        end.join("\n\n\n") << bib_title
+      end
     end
 
     def write
