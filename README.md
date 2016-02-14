@@ -14,8 +14,8 @@ it works in production.
 
 ## What does it do
 
-First, it replaces the html generation for pandoc. This means you will
-have support for pandoc's markdown extensions, like ~strikethrough~ and
+It replaces the html generation for pandoc. This means you will have
+support for pandoc's markdown extensions, like ~strikethrough~ and
 [@cite], tables and [a lot more stuff](http://pandoc.org/README.html).
 
 It'll also generate the post in other formats you like, so your
@@ -32,6 +32,7 @@ Add to `_config.yml`:
 
 ```yaml
 
+markdown: pandoc
 pandoc:
     skip: false
     bundle_permalink: ':output_ext/:slug.:output_ext'
@@ -48,6 +49,9 @@ pandoc:
       epub: '--epub-chapter-level=2'
 
 ```
+
+* `markdown: pandoc` will instruct jekyll to use the pandoc html
+  converter.
 
 * `skip` allows you to skip the other formats generation and proceed with the
 regular jekyll site build.
