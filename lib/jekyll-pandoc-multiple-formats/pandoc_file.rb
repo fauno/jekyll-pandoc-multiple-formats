@@ -90,11 +90,6 @@ module Jekyll
     # adds post metadata as yaml metadata
     def yaml_metadata
       if single_post?
-        if @config['date_format']
-          single_post.data['date'] = single_post.data['date'].strftime(@config['date_format'])
-        else
-          single_post.data.delete('date')
-        end
 
         # if we were to merge config to data, the default options would
         # take precedence
@@ -105,6 +100,12 @@ module Jekyll
         # we extract the excerpt because it serializes as an object and
         # breaks pandoc
         metadata = single_post.data.reject{ |k| k == 'excerpt' }
+
+        if @config['date_format']
+          metadata['date'] = metadata['date'].strftime(@config['date_format'])
+        else
+          metadata.delete('date')
+        end
       else
         # we have to use this fugly syntax because jekyll doesn't do
         # symbols
