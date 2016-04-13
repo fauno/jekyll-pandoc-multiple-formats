@@ -166,8 +166,11 @@ module Jekyll
       File.exists?(path)
     end
 
+    # Returns a cover, without checking if it exists
+    #
+    # It assumes covers are in PNG format
     def cover
-      @posts.select { |p| p.data.key? 'cover' }.first.data['cover'] if has_cover?
+      File.join(@site.config['source'], @config['covers_dir'], "#{@slug}.png")
     end
 
     def flags
@@ -214,7 +217,7 @@ module Jekyll
     end
 
     def has_cover?
-      @posts.any? { |p| p.data.key? 'cover' }
+      File.exists? cover
     end
 
     def papersize
