@@ -48,6 +48,7 @@ class PandocGenerator < Generator
       end
 
       @site.post_attr_hash('categories').each_pair do |title, posts|
+        posts.sort!
         pandoc_file = PandocFile.new(@site, output, posts, title)
         next unless pandoc_file.write
 
