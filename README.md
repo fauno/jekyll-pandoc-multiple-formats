@@ -75,7 +75,7 @@ other available formats from the post itself:
         {% for format in site.pandoc.outputs %}
         {% capture extension %}{{ format | first }}{% endcapture %}
         <li>
-          <a href="{{ extension }}{{ page.url | remove:'.html' }}.{{ extension }}">
+          <a href="{{ site.baseurl }}/{{ extension }}{{ page.url | remove:'.html' }}.{{ extension }}">
             {{ extension }}
           </a>
         </li>
