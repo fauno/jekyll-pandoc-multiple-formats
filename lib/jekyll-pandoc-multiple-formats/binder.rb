@@ -21,17 +21,25 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-require 'open3'
+module JekyllPandocMultipleFormats
+  class Binder < Printer
+    def initialize(file, papersize = nil, sheetsize = nil, extra_options = nil)
+      super
+      @output_file   = file.gsub(/\.pdf\Z/, '-binder.pdf')
 
-require 'jekyll-pandoc-multiple-formats/version'
-require 'jekyll-pandoc-multiple-formats/config'
+      render_template
+      self
+    end
 
-# TODO this may go to a separate gem
-require 'jekyll-pandoc-multiple-formats/printer'
-require 'jekyll-pandoc-multiple-formats/imposition'
-require 'jekyll-pandoc-multiple-formats/binder'
-require 'jekyll-pandoc-multiple-formats/unite'
+    def to_nup
+      @pages.times.map{|i|i+1}.map do |page|
+        sheet=[]
+        @nup.times do
+          sheet << page
+        end
 
-require 'jekyll-pandoc-multiple-formats/pandoc_file'
-require 'jekyll-pandoc-multiple-formats/generator'
-require 'jekyll-pandoc-multiple-formats/converter'
+        sheet
+      end.flatten
+    end
+  end
+end

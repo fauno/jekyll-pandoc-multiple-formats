@@ -21,42 +21,25 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-require 'pdf/info'
-require 'rtex'
-
 module JekyllPandocMultipleFormats
-  class Imposition
+  class Imposition < Printer
 
-    # Imposition template
-    TEMPLATE = <<-EOT.gsub(/^\s+/, '')
-      \\documentclass[@@papersize@@,10pt]{article}
+    attr_accessor :rounded_pages, :blank_pages, :signature
 
-      \\usepackage{pgfpages}
-      \\usepackage{pdfpages}
+    def initialize(file, papersize = nil, sheetsize = nil, signature = nil, extra_options = nil)
+      super(file, papersize, sheetsize, extra_options)
+      @output_file   = file.gsub(/\.pdf\Z/, '-imposed.pdf')
+      # Total pages must be modulo 4
+      @rounded_pages = round_to_nearest(@pages, 4)
+      @blank_pages   = @rounded_pages - @pages
+      # If we don't use a signature, make a single fold
+      @signature     = signature || @rounded_pages
 
-      \\pgfpagesuselayout{@@nup@@ on 1}[@@papersize@@@@extra@@]
-
-      \\begin{document}
-        \\includepdf[pages={@@pages@@}]{@@document@@}
-      \\end{document}
-      EOT
-
-    def round_to_nearest(int, near)
-      (int + (near - 1)) / near * near
+      render_template
+      self
     end
 
-    def write(file, papersize = 'a4paper', nup = 4, extra_options = nil)
-      return unless /\.pdf\Z/ =~ file
-      return unless pdf = PDF::Info.new(file)
-
-      file = File.realpath(file)
-
-      # Pages
-      pages = pdf.metadata[:page_count]
-      # Total pages must be modulo 4
-      rounded_pages = round_to_nearest(pages, 4)
-      blank_pages = rounded_pages - pages
-
+    def to_nup
       # 14 pages example:
       # [ {}, 1, 2, {}, 14, 3, 4, 13, 12, 5, 6, 11, 10, 7, 8, 9 ]
       #
@@ -71,44 +54,42 @@ module JekyllPandocMultipleFormats
       # An array of numbered pages padded with blank pages ('{}')
       #
       # [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 ] + [ '{}', '{}' ]
-      padded = pages.times.map{|i|i+1} + Array.new(blank_pages, '{}')
-      # Split in halves
-      # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
-      #   [ 9, 10, 11, 12, 13, 14, '{}', '{}' ] ]
-      halved = padded.each_slice(rounded_pages / 2).to_a
-      # Add a nil as last page.  When we reverse it and intercalate by
-      # two pages, we'll have [nil, last_page] instead of
-      # [last_page,second_to_last_page]
-      #
-      # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
-      #   [ 9, 10, 11, 12, 13, 14, '{}', '{}', nil ] ]
-      halved.last << nil
-      # Reverse the second half and intercalate by two pages into the
-      # first one.  Then remove nil elements and flatten the array.
-      #
-      # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
-      #   [ nil, '{}', '{}', 14, 13, 12, 11, 10 ] ]
-      #
-      # [ {}, 1, 2, {}, 14, 3, 4, 13, 12, 5, 6, 11, 10, 7, 8, 9 ]
-      order = halved.last.reverse.each_slice(2).zip(halved.first.each_slice(2).to_a).flatten.compact
+      padded = @pages.times.map{|i|i+1} + Array.new(@blank_pages, '{}')
 
-      # Create the matrix of pages (N-Up)
+      # If we have a signature, we have to split in groups up to the
+      # amount of pages per signature, and then continue with the rest
       #
-      # ["{}", 1, "{}", 1, 2, "{}", 2, "{}", 14, 3, 14, 3, 4, 13, 4, 13, 12, 5, 12, 5, 6, 11, 6, 11, 10, 7, 10, 7, 8, 9, 8, 9]
-      nup_pages = order.each_slice(2).map{ |i| ((nup/2)-1).times { i = i+i }; i }.flatten
-
-      template = TEMPLATE.gsub('@@nup@@', nup)
-        .gsub('@@papersize@@', papersize)
-        .gsub('@@extra@@', extra_options)
-
-      # Create the imposed file
-      file_name = file.gsub(/\.pdf\Z/, '-imposed.pdf')
-      pdflatex = RTeX::Document.new(template.gsub('@@document@@', file).gsub('@@pages@@', nup_pages * ','))
-      pdflatex.to_pdf do |pdf_file|
-        FileUtils.cp pdf_file, file_name
+      # If we have no signature, we assume it's equal to the total
+      # amount of pages, so you only have one fold
+      signed = padded.each_slice(@signature).to_a
+      folds = []
+      signed.each do |fold|
+        #
+        # Split in halves
+        # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
+        #   [ 9, 10, 11, 12, 13, 14, '{}', '{}' ] ]
+        halved = fold.each_slice(@signature / 2).to_a
+        # Add a nil as last page.  When we reverse it and intercalate by
+        # two pages, we'll have [nil, last_page] instead of
+        # [last_page,second_to_last_page]
+        #
+        # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
+        #   [ 9, 10, 11, 12, 13, 14, '{}', '{}', nil ] ]
+        halved.last << nil
+        # Reverse the second half and intercalate by two pages into the
+        # first one.  Then remove nil elements and flatten the array.
+        #
+        # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
+        #   [ nil, '{}', '{}', 14, 13, 12, 11, 10 ] ]
+        #
+        # [ {}, 1, 2, {}, 14, 3, 4, 13, 12, 5, 6, 11, 10, 7, 8, 9 ]
+        folds << halved.last.reverse.each_slice(2).zip(halved.first.each_slice(2).to_a).flatten.compact
       end
 
-      file_name
+      # Create the matrix of pages (N-Up) per fold
+      #
+      # ["{}", 1, "{}", 1, 2, "{}", 2, "{}", 14, 3, 14, 3, 4, 13, 4, 13, 12, 5, 12, 5, 6, 11, 6, 11, 10, 7, 10, 7, 8, 9, 8, 9]
+      folds.map { |o| o.each_slice(2).map{ |i| a=[]; (@nup/2).times { a = a+i }; a }}.flatten
     end
   end
 end

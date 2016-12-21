@@ -1,0 +1,10 @@
+---
+layout: nil
+title: A Title
+author: minitest
+categories: [ test ]
+---
+
+# A Title
+
+Some text.
