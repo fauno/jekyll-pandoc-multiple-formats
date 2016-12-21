@@ -40,6 +40,7 @@ pandoc:
     sheetsize: 'a4paper'
     imposition: true
     binder: true
+    covers_dir: assets/covers
 
     flags: '--smart'
     site_flags: '--toc'
@@ -75,6 +76,8 @@ regular jekyll site build.
 
 * `sheetsize` is the page size for ready the print PDF
 
+* `covers_dir` the directory where covers are stored
+
 **IMPORTANT**: As of version 0.1.0 the syntax of the config changed.
 Please upgrade your `_config.yml` accordingly.
 
@@ -90,6 +93,17 @@ image on the epub result.
     ---
     cover: images/awesome.png
     ---
+
+For categories or posts without a cover specified, the plugin looks for
+a PNG file inside the `covers_dir` whose file name will be the
+category/post slug.
+
+Since 0.2.0, there's also support for PDF covers.  If you have a PNG
+cover, it will get converted to PDF.  You can also provide a PDF cover
+as long as it's the same file name as the PNG cover.
+
+* Category cover: `assets/covers/the_category_slug.png`
+* PDF cover: `assets/covers/the_slug.pdf`
 
 ### Paper sizes
 
