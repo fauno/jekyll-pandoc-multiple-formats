@@ -56,6 +56,7 @@ module Jekyll
 
     def relative_path
       path = URL.unescape_path(url)
+      path.gsub! /^\//, ''
 
       # but if the post is going to be index.html, use slug + format
       # (ie /year/month/slug/slug.pdf)
