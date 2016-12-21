@@ -81,6 +81,21 @@ class PandocGenerator < Generator
           binder_file.write
           @site.keep_files << binder_file.relative_path(@site.dest)
         end
+
+        # Add covers to PDFs after building ready for print files
+        if pandoc_file.has_cover?
+          # Generate the cover
+          next unless pandoc_file.pdf_cover!
+          united_output = pandoc_file.path.gsub(/\.pdf\Z/, '-cover.pdf')
+          united_file = JekyllPandocMultipleFormats::Unite
+            .new(united_output, [pandoc_file.pdf_cover,pandoc_file.path], pandoc_file.papersize)
+
+          if united_file.write
+            # Replace the original file with the one with cover
+            FileUtils.rm_f(pandoc_file.path)
+            FileUtils.mv(united_output, pandoc_file.path)
+          end
+        end
       end
     end
   end

@@ -21,17 +21,49 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-require 'open3'
+module JekyllPandocMultipleFormats
+  class Unite < Printer
+    TEMPLATE = <<-EOT.gsub(/^\s+/, '')
+      \\documentclass{article}
+      \\usepackage{pdfpages}
 
-require 'jekyll-pandoc-multiple-formats/version'
-require 'jekyll-pandoc-multiple-formats/config'
+      \\begin{document}
+        @@include@@
+      \\end{document}
+      EOT
 
-# TODO this may go to a separate gem
-require 'jekyll-pandoc-multiple-formats/printer'
-require 'jekyll-pandoc-multiple-formats/imposition'
-require 'jekyll-pandoc-multiple-formats/binder'
-require 'jekyll-pandoc-multiple-formats/unite'
+    INCLUDE_TEMPLATE = '\\includepdf[fitpaper=true,pages=-]{@@document@@}'
 
-require 'jekyll-pandoc-multiple-formats/pandoc_file'
-require 'jekyll-pandoc-multiple-formats/generator'
-require 'jekyll-pandoc-multiple-formats/converter'
+    attr_accessor :files, :template
+
+    def initialize(output_file, files)
+      raise ArgumentError.new 'An array of filenames is required' unless files.is_a? Array
+
+      @output_file = output_file
+      @files       = files
+
+      render_template
+      self
+    end
+
+    def <<(file)
+      @files << File.realpath(file) if /\.pdf\Z/ =~ file
+    end
+
+    def files=(file_array)
+      return unless file_array.is_a? Array
+
+      file_array.each do |f|
+        self << f
+      end
+    end
+
+    def render_template
+      includes = @files.map do |f|
+        INCLUDE_TEMPLATE.gsub(/@@document@@/, f)
+      end
+
+      @template = TEMPLATE.gsub('@@include@@', includes.join("\n"))
+    end
+  end
+end

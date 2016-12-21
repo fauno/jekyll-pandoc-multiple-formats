@@ -170,7 +170,31 @@ module Jekyll
     #
     # It assumes covers are in PNG format
     def cover
-      File.join(@site.config['source'], @config['covers_dir'], "#{@slug}.png")
+      if single_post? && single_post.data['cover']
+        File.join(@site.config['source'], single_post.data['cover'])
+      else
+        File.join(@site.config['source'], @config['covers_dir'], "#{@slug}.png")
+      end
+    end
+
+    # Returns a PDF cover
+    def pdf_cover
+      cover.gsub(/\.[^\.]+\Z/, '.pdf')
+    end
+
+    def pdf_cover!
+      if has_cover? && !File.exists?(pdf_cover)
+        Dir::chdir(@site.config['source']) do
+          Open3::popen3("convert \"#{cover}\" \"#{pdf_cover}\"") do |stdin, stdout, stderr, thread|
+            STDERR.print stderr.read
+
+            # Wait for the process to finish
+            thread.value
+          end
+        end
+      end
+
+      File.exists?(pdf_cover)
     end
 
     def flags
