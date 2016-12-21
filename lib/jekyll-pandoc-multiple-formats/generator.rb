@@ -88,7 +88,7 @@ class PandocGenerator < Generator
           next unless pandoc_file.pdf_cover!
           united_output = pandoc_file.path.gsub(/\.pdf\Z/, '-cover.pdf')
           united_file = JekyllPandocMultipleFormats::Unite
-            .new(united_output, [pandoc_file.pdf_cover,pandoc_file.path], pandoc_file.papersize)
+            .new(united_output, [pandoc_file.pdf_cover,pandoc_file.path])
 
           if united_file.write
             # Replace the original file with the one with cover
