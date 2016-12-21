@@ -49,13 +49,15 @@ module JekyllPandocMultipleFormats
 
           output = ''
           Dir::chdir(@config['source']) do
-            Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr|
+            Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr, thread|
               stdin.puts content
               stdin.close
 
               output = stdout.read.strip
               STDERR.print stderr.read
 
+              # Wait for the process to finish
+              thread.value
             end
           end
 
@@ -68,7 +70,7 @@ module JekyllPandocMultipleFormats
         end
 
         def output_ext(ext)
-          ".html"
+          '.html'
         end
       end
     end
