@@ -40,18 +40,19 @@ module JekyllPandocMultipleFormats
       raise ArgumentError.new 'An array of filenames is required' unless files.is_a? Array
 
       @output_file = output_file
-      @files       = files
+      self.files   = files
 
       render_template
       self
     end
 
     def <<(file)
+      @files ||= []
       @files << File.realpath(file) if /\.pdf\Z/ =~ file
     end
 
     def files=(file_array)
-      return unless file_array.is_a? Array
+      return unless file_array.respond_to? :each
 
       file_array.each do |f|
         self << f
