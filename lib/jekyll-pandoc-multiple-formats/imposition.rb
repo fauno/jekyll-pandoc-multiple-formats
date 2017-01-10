@@ -68,7 +68,7 @@ module JekyllPandocMultipleFormats
         # Split in halves
         # [ [ 1, 2, 3, 4, 5, 6, 7, 8 ],
         #   [ 9, 10, 11, 12, 13, 14, '{}', '{}' ] ]
-        halved = fold.each_slice(@signature / 2).to_a
+        halved = fold.each_slice(fold.size / 2).to_a
         # Add a nil as last page.  When we reverse it and intercalate by
         # two pages, we'll have [nil, last_page] instead of
         # [last_page,second_to_last_page]

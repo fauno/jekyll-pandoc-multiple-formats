@@ -41,12 +41,12 @@ module Jekyll
         raise ArgumentError.new "'title' argument is required for multipost file" unless title
 
         @title = title
-        @slug  = Utils.slugify(title)
       else
         @posts = [posts]
-        @slug  = posts.data['slug']
         @title = posts.data['title'] unless title
       end
+
+      @slug  = Utils.slugify(title)
     end
 
     def path
@@ -185,13 +185,11 @@ module Jekyll
 
     def pdf_cover!
       if has_cover? && !File.exists?(pdf_cover)
-        Dir::chdir(@site.config['source']) do
-          Open3::popen3("convert \"#{cover}\" \"#{pdf_cover}\"") do |stdin, stdout, stderr, thread|
-            STDERR.print stderr.read
+        Open3::popen3("convert \"#{cover}\" \"#{pdf_cover}\"") do |stdin, stdout, stderr, thread|
+          STDERR.print stderr.read
 
-            # Wait for the process to finish
-            thread.value
-          end
+          # Wait for the process to finish
+          thread.value
         end
       end
 
