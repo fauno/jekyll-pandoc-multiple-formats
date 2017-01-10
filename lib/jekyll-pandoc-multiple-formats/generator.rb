@@ -50,6 +50,13 @@ class PandocGenerator < Generator
       @site.post_attr_hash('categories').each_pair do |title, posts|
         posts.sort!
         pandoc_file = PandocFile.new(@site, output, posts, title)
+
+        if @site.keep_files.include? pandoc_file.relative_path
+          puts "#{pandoc_file.relative_path} is a category file AND a post file"
+          puts 'change the category name to fix this'
+          next
+        end
+
         next unless pandoc_file.write
 
         @site.keep_files << pandoc_file.relative_path
