@@ -34,6 +34,8 @@ module JekyllPandocMultipleFormats
       @blank_pages   = @rounded_pages - @pages
       # If we don't use a signature, make a single fold
       @signature     = signature || @rounded_pages
+      # Also if we specified 0
+      @signature     = @rounded_pages if signature == 0
 
       render_template
       self

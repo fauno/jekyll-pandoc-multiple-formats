@@ -41,6 +41,7 @@ pandoc:
     imposition: true
     binder: true
     covers_dir: assets/covers
+    signature: 20
 
     flags: '--smart'
     site_flags: '--toc'
@@ -72,11 +73,17 @@ regular jekyll site build.
 
 * `bundle_permalink` is the path of the bundled articles
 
-* `papersize` is the page size for PDF
+* `papersize` is the page size for PDF.  You can also use this option on
+  the front matter.
 
-* `sheetsize` is the page size for ready the print PDF
+* `sheetsize` is the page size for ready the print PDF.  You can also
+  use this option on the front matter.
 
 * `covers_dir` the directory where covers are stored
+
+* `signature` is the amount of pages per fold on the imposition version.
+  Specify `0` for a single fold of all the pages.  You can also use this
+  option on the front matter.
 
 **IMPORTANT**: As of version 0.1.0 the syntax of the config changed.
 Please upgrade your `_config.yml` accordingly.
