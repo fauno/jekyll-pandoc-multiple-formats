@@ -46,7 +46,7 @@ module Jekyll
         @title = title or posts.data['title']
       end
 
-      @slug  = Utils.slugify(title)
+      @slug = Utils.slugify(@title)
     end
 
     def path
