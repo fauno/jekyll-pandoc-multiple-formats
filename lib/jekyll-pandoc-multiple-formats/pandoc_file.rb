@@ -43,7 +43,7 @@ module Jekyll
         @title = title
       else
         @posts = [posts]
-        @title = posts.data['title'] unless title
+        @title = title or posts.data['title']
       end
 
       @slug  = Utils.slugify(title)
