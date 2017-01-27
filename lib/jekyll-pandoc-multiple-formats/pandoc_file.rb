@@ -26,7 +26,7 @@ module Jekyll
     include Convertible
 
 
-    attr_reader :format, :site, :config, :flags, :posts, :slug, :title, :url
+    attr_reader :format, :site, :config, :flags, :posts, :slug, :title, :url, :is_single_post
     attr_reader :papersize, :sheetsize, :signature
 
     def initialize(site, format, posts, title = nil)
@@ -34,16 +34,17 @@ module Jekyll
       @config = JekyllPandocMultipleFormats::Config.new(@site.config['pandoc']).config
       @format = format
       @flags  = []
+      @is_single_post = not(posts.is_a? Array)
 
-      if posts.is_a? Array
+      if single_post?
+        @posts = [posts]
+        @title = title or posts.data['title']
+      else
         @posts = posts
 
         raise ArgumentError.new "'title' argument is required for multipost file" unless title
 
         @title = title
-      else
-        @posts = [posts]
-        @title = title or posts.data['title']
       end
 
       @slug = Utils.slugify(@title)
@@ -236,7 +237,7 @@ module Jekyll
     end
 
     def single_post?
-      @posts.count == 1
+      @is_single_post
     end
 
     def has_cover?
