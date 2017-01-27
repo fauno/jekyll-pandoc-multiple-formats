@@ -67,6 +67,14 @@ module Jekyll
         path << @format
       end
 
+      # if permalink ends with trailing .html or trailing slash, path now ends with proper suffix
+      # for other cases (permalink with no trailing extension or slash), append format
+      # (ie /year/month/slug permalink --> /year/month/slug.pdf)
+      if not path.end_with? ".#{@format}"
+        path << '.'
+        path << @format
+      end
+
       path
     end
 
