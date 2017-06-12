@@ -41,12 +41,14 @@ module Jekyll
         raise ArgumentError.new "'title' argument is required for multipost file" unless title
 
         @title = title
+        @slug = Utils.slugify(@title)
       else
         @posts = [posts]
         @title = posts.data['title'] unless title
+        @slug  = posts.data['slug']
       end
 
-      @slug = Utils.slugify(@title)
+      self
     end
 
     def path
