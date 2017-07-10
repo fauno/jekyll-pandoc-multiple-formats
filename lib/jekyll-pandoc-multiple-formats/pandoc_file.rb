@@ -36,6 +36,7 @@ module Jekyll
       @flags  = []
 
       if posts.is_a? Array
+        @single_post = false
         @posts = posts
 
         raise ArgumentError.new "'title' argument is required for multipost file" unless title
@@ -43,6 +44,7 @@ module Jekyll
         @title = title
         @slug = Utils.slugify(@title)
       else
+        @single_post = true
         @posts = [posts]
         @title = posts.data['title'] unless title
         @slug  = posts.data['slug']
@@ -74,7 +76,7 @@ module Jekyll
     # if it's just one article, the url is the same except it's not html
     # otherwise we use the permalink template with some placeholder
     def url
-      @url = if single_post?
+      @url ||= if single_post?
         single_post.url.gsub(/\.html$/, ".#{@format}")
       else
         URL.new({
@@ -132,8 +134,10 @@ module Jekyll
     end
 
     def content
+      relative_re = /(!\[[^\]]*\]\()\/+/
       if single_post?
-        single_post.content
+        # make all images relative to source dir
+        single_post.content.gsub(relative_re, '\1')
       else
         header_re = /^(#+.*\n*|.*\n[=-]+\n*)\Z/
         bib_title = ""
@@ -142,7 +146,11 @@ module Jekyll
           # remove bibliography titles
           # since pandoc does it's own bibliography output, it recommends
           # leaving an empty chapter title to mark it as such
-          post.content.gsub(header_re, '')
+          content = post.content.gsub(header_re, '')
+          # make all images relative to source dir
+          content = content.gsub(relative_re, '\1')
+
+          content
         # we add the first bibliography title we can find in the end
         end.join("\n\n\n") << bib_title
       end
@@ -238,7 +246,7 @@ module Jekyll
     end
 
     def single_post?
-      @posts.count == 1
+      @single_post
     end
 
     def has_cover?
