@@ -134,10 +134,10 @@ module Jekyll
     end
 
     def content
-      relative_re = /(!\[[^\]]*\]\()\/+/
+      relative_re = /\(\/(.*)\)/
       if single_post?
         # make all images relative to source dir
-        single_post.content.gsub(relative_re, '\1')
+        single_post.content.gsub(relative_re, '(\1)')
       else
         header_re = /^(#+.*\n*|.*\n[=-]+\n*)\Z/
         bib_title = ""
@@ -148,7 +148,7 @@ module Jekyll
           # leaving an empty chapter title to mark it as such
           content = post.content.gsub(header_re, '')
           # make all images relative to source dir
-          content = content.gsub(relative_re, '\1')
+          content = content.gsub(relative_re, '(\1)')
 
           content
         # we add the first bibliography title we can find in the end
