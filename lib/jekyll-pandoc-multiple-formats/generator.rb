@@ -39,9 +39,12 @@ class PandocGenerator < Generator
 
     @config.outputs.each_pair do |output, extra_flags|
       @site.posts.docs.each do |post|
+        Jekyll::Hooks.trigger :posts, :pre_render, post, nil
 
         pandoc_file = PandocFile.new(@site, output, post)
         next unless pandoc_file.write
+
+        Jekyll::Hooks.trigger :posts, :post_render, post, nil
 
         @site.keep_files << pandoc_file.relative_path
         @pandoc_files << pandoc_file
