@@ -37,7 +37,7 @@ class PandocGenerator < Generator
     # we create a single array of files
     @pandoc_files = []
 
-    @config.outputs.each_pair do |output, extra_flags|
+    @config.outputs.each_pair do |output, _|
       @site.posts.docs.each do |post|
         Jekyll::Hooks.trigger :posts, :pre_render, post, nil
 
