@@ -34,6 +34,10 @@ module JekyllPandocMultipleFormats
       @config['binder']
     end
 
+    def full_file?
+      @config['full_file']
+    end
+
     # TODO magic
     def outputs
       @config['outputs']

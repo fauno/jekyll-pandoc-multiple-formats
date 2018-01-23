@@ -50,7 +50,7 @@ class PandocGenerator < Generator
         @pandoc_files << pandoc_file
       end
 
-      if @config['full_file']
+      if @config.full_file?
         # For parts to make sense, we order articles by date and then by
         # category, so each category is ordered by date.
         #
