@@ -25,7 +25,6 @@ module Jekyll
   class PandocFile
     include Convertible
 
-
     attr_reader :format, :site, :config, :flags, :posts, :slug, :title, :url
     attr_reader :papersize, :sheetsize, :signature
 
@@ -134,7 +133,8 @@ module Jekyll
     end
 
     def content
-      relative_re = /\(\/(.*)\)/
+      # add base url from config if we're creating a subdir site
+      relative_re = /\(#{@site.config.dig('baseurl')}\/(.*)\)/
       if single_post?
         # make all images relative to source dir
         single_post.content.gsub(relative_re, '(\1)')
