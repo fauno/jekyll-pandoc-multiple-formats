@@ -11,7 +11,9 @@ module JekyllPandocMultipleFormats
       'flags'             => '--smart',
       'site_flags'        => '--toc',
       'outputs'           => {},
-      'covers_dir'        => 'images/'
+      'covers_dir'        => 'images/',
+      'title'             => nil,
+      'full_flags'        => '--top-level-division=part'
     }
 
     attr_accessor :config

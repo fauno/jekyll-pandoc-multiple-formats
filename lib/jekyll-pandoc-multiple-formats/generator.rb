@@ -50,6 +50,23 @@ class PandocGenerator < Generator
         @pandoc_files << pandoc_file
       end
 
+      if @config.full_file
+        # For parts to make sense, we order articles by date and then by
+        # category, so each category is ordered by date.
+        #
+        # cat1 - art1
+        # cat1 - art3
+        # cat2 - art2
+        full = @site.posts.docs.reject { |p| p.data.dig('full') }.sort_by do |p|
+          [ p.data['date'], p.data['categories'].first.to_s ]
+        end
+
+        full_file = PandocFile.new(@site, output, full, @site.config['title'], { full: true })
+        full_file.write
+        @site.keep_files << full_file.relative_path
+        @pandoc_files << full_file
+      end
+
       @site.post_attr_hash('categories').each_pair do |title, posts|
         posts.sort!
         pandoc_file = PandocFile.new(@site, output, posts, title)

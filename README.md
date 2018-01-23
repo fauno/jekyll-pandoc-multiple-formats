@@ -42,6 +42,7 @@ pandoc:
     binder: true
     covers_dir: assets/covers
     signature: 20
+    full_file: true
 
     flags: '--smart'
     site_flags: '--toc'
@@ -57,6 +58,10 @@ pandoc:
 
 * `skip` allows you to skip the other formats generation and proceed with the
 regular jekyll site build.
+
+* `full_flags` if `full_file` is defined, these flags are used on it.
+  By default are set to `--top-level-division=part` so each category is
+  a different book part.
 
 * `site_flags` are flags applied to the html generation
 
@@ -84,6 +89,9 @@ regular jekyll site build.
 * `signature` is the amount of pages per fold on the imposition version.
   Specify `0` for a single fold of all the pages.  You can also use this
   option on the front matter.
+
+* `full_file` generates a single file containing all articles, sectioned
+  by their main category (the first one defined if many).
 
 **IMPORTANT**: As of version 0.1.0 the syntax of the config changed.
 Please upgrade your `_config.yml` accordingly.

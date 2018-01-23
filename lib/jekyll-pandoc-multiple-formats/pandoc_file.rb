@@ -28,11 +28,13 @@ module Jekyll
     attr_reader :format, :site, :config, :flags, :posts, :slug, :title, :url
     attr_reader :papersize, :sheetsize, :signature
 
-    def initialize(site, format, posts, title = nil)
+    def initialize(site, format, posts, title = nil, extra = {})
       @site   = site
       @config = JekyllPandocMultipleFormats::Config.new(@site.config['pandoc']).config
       @format = format
       @flags  = []
+      @last_cat = nil
+      @extra = extra
 
       if posts.is_a? Array
         @single_post = false
@@ -45,7 +47,7 @@ module Jekyll
       else
         @single_post = true
         @posts = [posts]
-        @title = posts.data['title'] unless title
+        @title = title || posts.data['title']
         @slug  = posts.data['slug']
       end
 
@@ -150,7 +152,28 @@ module Jekyll
           # make all images relative to source dir
           content = content.gsub(relative_re, '(\1)')
 
-          content
+          # if the file contains all the articles, we make each category
+          # a different part by adding a first level title out of it
+          if full?
+            # make all titles down a level
+            # TODO have sixth level titles into account
+            content = content.gsub(/^#/, '##')
+
+            # we don't use all the categories otherwise the article
+            # would be repeated
+            cat = post.data['categories'].first
+            # if we already set the category part, we just skip it
+            if @last_cat == cat
+              content
+            # otherwise add the category title
+            else
+              @last_cat = cat
+              "# #{cat}\n\n#{content}"
+            end
+          else
+            # or we just return the content
+            content
+          end
         # we add the first bibliography title we can find in the end
         end.join("\n\n\n") << bib_title
       end
@@ -163,6 +186,7 @@ module Jekyll
       # Move to the source dir since everything will be relative to that
       Dir::chdir(@site.config['source']) do
         # Do the stuff
+        puts command
         Open3::popen3(command) do |stdin, stdout, stderr, thread|
           stdin.puts yaml_metadata
           stdin.puts content
@@ -225,11 +249,19 @@ module Jekyll
         @flags << cover
       end
 
+      if full?
+        @flags << @config['full_flags']
+      end
+
       @flags.join ' '
     end
 
     def command
       'pandoc ' << flags
+    end
+
+    def full?
+      @extra[:full]
     end
 
     def pdf?
