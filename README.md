@@ -50,7 +50,10 @@ pandoc:
       latex:
       pdf: '--latex-engine=xelatex'
       epub: '--epub-chapter-level=2'
-
+    lang:
+      ar:
+        all: '-V mainfont="Amiri"'
+        pdf: '--include-in-header=_layouts/rtl.tex'
 ```
 
 * `markdown: pandoc` will instruct jekyll to use the pandoc html
@@ -92,6 +95,11 @@ regular jekyll site build.
 
 * `full_file` generates a single file containing all articles, sectioned
   by their main category (the first one defined if many).
+
+* `lang` is a hash where you can define per-language flags.  If you have
+  a `lang` attribute in your site config, this plugin will add the
+  `-V lang=XX` flag and any language-specific flag you want.  You can
+  define language flags for `all` formats or for specific formats.
 
 **IMPORTANT**: As of version 0.1.0 the syntax of the config changed.
 Please upgrade your `_config.yml` accordingly.

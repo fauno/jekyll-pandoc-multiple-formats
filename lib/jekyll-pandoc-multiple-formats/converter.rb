@@ -45,11 +45,16 @@ module JekyllPandocMultipleFormats
       base.class_eval do
         # Just return html5
         def convert(content)
-          flags  = "#{@config['pandoc']['flags']} #{@config['pandoc']['site_flags']}"
+          lang  = @config.dig('lang')
+          flags = []
+          flags << @config.dig('pandoc', 'flags')
+          flags << @config.dig('pandoc', 'site_flags')
+          flags << @config.dig('pandoc', 'lang', lang, 'all')
 
           output = ''
           Dir::chdir(@config['source']) do
-            Open3::popen3("pandoc -t html5 #{flags}") do |stdin, stdout, stderr, thread|
+            cmd = "pandoc -t html5 #{flags.compact.join(' ')}"
+            Open3::popen3(cmd) do |stdin, stdout, stderr, thread|
               stdin.puts content
               stdin.close
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2015 Nicolás Reynolds <fauno@endefensadelsl.org>
+# Copyright (c) 2012-2018 Nicolás Reynolds <fauno@endefensadelsl.org>
 #               2012-2013 Mauricio Pasquier Juan <mpj@endefensadelsl.org>
 #               2013      Brian Candler <b.candler@pobox.com>
 # 
@@ -253,11 +253,25 @@ module Jekyll
         @flags << @config['full_flags']
       end
 
-      @flags.join ' '
+      if site_lang?
+        @flags << "-V lang=#{site_lang}"
+        @flags << @config.dig('lang', site_lang, 'all')
+        @flags << @config.dig('lang', site_lang, @format)
+      end
+
+      @flags.compact.join ' '
     end
 
     def command
       'pandoc ' << flags
+    end
+
+    def site_lang
+      @site.config.dig('lang')
+    end
+
+    def site_lang?
+      !site_lang.nil?
     end
 
     def full?
