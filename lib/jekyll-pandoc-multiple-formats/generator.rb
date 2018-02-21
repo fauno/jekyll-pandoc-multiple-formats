@@ -38,7 +38,9 @@ class PandocGenerator < Generator
     @pandoc_files = []
 
     @config.outputs.each_pair do |output, _|
+      Jekyll.logger.info 'Pandoc:', "Generating #{output}"
       @site.posts.docs.each do |post|
+        Jekyll.logger.debug 'Pandoc:', post.data['title']
         Jekyll::Hooks.trigger :posts, :pre_render, post, { format: output }
 
         pandoc_file = PandocFile.new(@site, output, post)
@@ -50,24 +52,8 @@ class PandocGenerator < Generator
         @pandoc_files << pandoc_file
       end
 
-      if @config.full_file?
-        # For parts to make sense, we order articles by date and then by
-        # category, so each category is ordered by date.
-        #
-        # cat1 - art1
-        # cat1 - art3
-        # cat2 - art2
-        full = @site.posts.docs.reject { |p| p.data.dig('full') }.sort_by do |p|
-          [ p.data['date'], p.data['categories'].first.to_s ]
-        end
-
-        full_file = PandocFile.new(@site, output, full, @site.config['title'], { full: true })
-        full_file.write
-        @site.keep_files << full_file.relative_path
-        @pandoc_files << full_file
-      end
-
       @site.post_attr_hash('categories').each_pair do |title, posts|
+        Jekyll.logger.info 'Pandoc:', "Generating category #{title}"
         posts.sort!
         pandoc_file = PandocFile.new(@site, output, posts, title)
 
@@ -82,46 +68,64 @@ class PandocGenerator < Generator
         @site.keep_files << pandoc_file.relative_path
         @pandoc_files << pandoc_file
       end
+
+      if @config.full_file?
+        title = @site.config.dig('title')
+        Jekyll.logger.info 'Pandoc:', "Generating full file #{title}"
+        # For parts to make sense, we order articles by date and then by
+        # category, so each category is ordered by date.
+        #
+        # cat1 - art1
+        # cat1 - art3
+        # cat2 - art2
+        full = @site.posts.docs.reject { |p| p.data.dig('full') }.sort_by do |p|
+          [ p.data['date'], p.data['categories'].first.to_s ]
+        end
+
+        full_file = PandocFile.new(@site, output, full, title, { full: true })
+        full_file.write
+        @site.keep_files << full_file.relative_path
+        @pandoc_files << full_file
+      end
     end
 
     @pandoc_files.each do |pandoc_file|
       # If output is PDF, we also create the imposed PDF
-      if pandoc_file.pdf?
+      next unless pandoc_file.pdf?
 
-        if @config.imposition?
+      if @config.imposition?
 
-          imposed_file = JekyllPandocMultipleFormats::Imposition
-            .new(pandoc_file.path, pandoc_file.papersize,
-            pandoc_file.sheetsize, pandoc_file.signature)
+        imposed_file = JekyllPandocMultipleFormats::Imposition
+          .new(pandoc_file.path, pandoc_file.papersize,
+          pandoc_file.sheetsize, pandoc_file.signature)
 
-          imposed_file.write
-          @site.keep_files << imposed_file.relative_path(@site.dest)
-        end
+        imposed_file.write
+        @site.keep_files << imposed_file.relative_path(@site.dest)
+      end
 
-        # If output is PDF, we also create the imposed PDF
-        if @config.binder?
+      # If output is PDF, we also create the imposed PDF
+      if @config.binder?
 
-          binder_file = JekyllPandocMultipleFormats::Binder
-            .new(pandoc_file.path, pandoc_file.papersize,
-            pandoc_file.sheetsize)
+        binder_file = JekyllPandocMultipleFormats::Binder
+          .new(pandoc_file.path, pandoc_file.papersize,
+          pandoc_file.sheetsize)
 
-          binder_file.write
-          @site.keep_files << binder_file.relative_path(@site.dest)
-        end
+        binder_file.write
+        @site.keep_files << binder_file.relative_path(@site.dest)
+      end
 
-        # Add covers to PDFs after building ready for print files
-        if pandoc_file.has_cover?
-          # Generate the cover
-          next unless pandoc_file.pdf_cover!
-          united_output = pandoc_file.path.gsub(/\.pdf\Z/, '-cover.pdf')
-          united_file = JekyllPandocMultipleFormats::Unite
-            .new(united_output, [pandoc_file.pdf_cover,pandoc_file.path])
+      # Add covers to PDFs after building ready for print files
+      if pandoc_file.has_cover?
+        # Generate the cover
+        next unless pandoc_file.pdf_cover!
+        united_output = pandoc_file.path.gsub(/\.pdf\Z/, '-cover.pdf')
+        united_file = JekyllPandocMultipleFormats::Unite
+          .new(united_output, [pandoc_file.pdf_cover,pandoc_file.path])
 
-          if united_file.write
-            # Replace the original file with the one with cover
-            FileUtils.rm_f(pandoc_file.path)
-            FileUtils.mv(united_output, pandoc_file.path)
-          end
+        if united_file.write
+          # Replace the original file with the one with cover
+          FileUtils.rm_f(pandoc_file.path)
+          FileUtils.mv(united_output, pandoc_file.path)
         end
       end
     end
