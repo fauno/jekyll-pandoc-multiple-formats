@@ -34,7 +34,10 @@ Add to `_config.yml`:
 
 markdown: pandoc
 pandoc:
-    skip: false
+    skip:
+      full: false
+      posts: false
+      categories: false
     bundle_permalink: ':output_ext/:slug.:output_ext'
     papersize: 'a5paper'
     sheetsize: 'a4paper'
@@ -59,8 +62,10 @@ pandoc:
 * `markdown: pandoc` will instruct jekyll to use the pandoc html
   converter.
 
-* `skip` allows you to skip the other formats generation and proceed with the
-regular jekyll site build.
+* `skip` allows you to skip the other formats generation and proceed
+  with the regular jekyll site build.  You can skip some of the
+  generation process or all of it.  Older versions of this plugin
+  required `true` or `false` to skip the process altogether.
 
 * `full_flags` if `full_file` is defined, these flags are used on it.
   By default are set to `--top-level-division=part` so each category is

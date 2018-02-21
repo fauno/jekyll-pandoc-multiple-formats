@@ -28,6 +28,55 @@ class PandocGenerator < Generator
 
   attr_accessor :site, :config
 
+  def generate_post_for_output(post, output)
+    Jekyll.logger.debug 'Pandoc:', post.data['title']
+    Jekyll::Hooks.trigger :posts, :pre_render, post, { format: output }
+
+    pandoc_file = PandocFile.new(@site, output, post)
+    return unless pandoc_file.write
+
+    Jekyll::Hooks.trigger :posts, :post_render, post, { format: output }
+
+    @site.keep_files << pandoc_file.relative_path
+    @pandoc_files << pandoc_file
+  end
+
+  def generate_category_for_output(category, posts, output)
+    Jekyll.logger.info 'Pandoc:', "Generating category #{category}"
+    posts.sort!
+    pandoc_file = PandocFile.new(@site, output, posts, category)
+
+    if @site.keep_files.include? pandoc_file.relative_path
+      Jekyll.logger.warn 'Pandoc:',
+        "#{pandoc_file.relative_path} is a category file AND a post file. Change the category name to fix this"
+      return
+    end
+
+    return unless pandoc_file.write
+
+    @site.keep_files << pandoc_file.relative_path
+    @pandoc_files << pandoc_file
+  end
+
+  def general_full_for_output(output)
+    title = @site.config.dig('title')
+    Jekyll.logger.info 'Pandoc:', "Generating full file #{title}"
+    # For parts to make sense, we order articles by date and then by
+    # category, so each category is ordered by date.
+    #
+    # cat1 - art1
+    # cat1 - art3
+    # cat2 - art2
+    full = @site.posts.docs.reject { |p| p.data.dig('full') }.sort_by do |p|
+      [ p.data['date'], p.data['categories'].first.to_s ]
+    end
+
+    full_file = PandocFile.new(@site, output, full, title, { full: true })
+    full_file.write
+    @site.keep_files << full_file.relative_path
+    @pandoc_files << full_file
+  end
+
   def generate(site)
     @site     ||= site
     @config   ||= JekyllPandocMultipleFormats::Config.new(@site.config['pandoc'])
@@ -39,54 +88,19 @@ class PandocGenerator < Generator
 
     @config.outputs.each_pair do |output, _|
       Jekyll.logger.info 'Pandoc:', "Generating #{output}"
-      @site.posts.docs.each do |post|
-        Jekyll.logger.debug 'Pandoc:', post.data['title']
-        Jekyll::Hooks.trigger :posts, :pre_render, post, { format: output }
-
-        pandoc_file = PandocFile.new(@site, output, post)
-        next unless pandoc_file.write
-
-        Jekyll::Hooks.trigger :posts, :post_render, post, { format: output }
-
-        @site.keep_files << pandoc_file.relative_path
-        @pandoc_files << pandoc_file
-      end
-
-      @site.post_attr_hash('categories').each_pair do |title, posts|
-        Jekyll.logger.info 'Pandoc:', "Generating category #{title}"
-        posts.sort!
-        pandoc_file = PandocFile.new(@site, output, posts, title)
-
-        if @site.keep_files.include? pandoc_file.relative_path
-          puts "#{pandoc_file.relative_path} is a category file AND a post file"
-          puts 'change the category name to fix this'
-          next
+      if @config.generate_posts?
+        @site.posts.docs.each do |post|
+          generate_post_for_output post, output
         end
-
-        next unless pandoc_file.write
-
-        @site.keep_files << pandoc_file.relative_path
-        @pandoc_files << pandoc_file
       end
 
-      if @config.full_file?
-        title = @site.config.dig('title')
-        Jekyll.logger.info 'Pandoc:', "Generating full file #{title}"
-        # For parts to make sense, we order articles by date and then by
-        # category, so each category is ordered by date.
-        #
-        # cat1 - art1
-        # cat1 - art3
-        # cat2 - art2
-        full = @site.posts.docs.reject { |p| p.data.dig('full') }.sort_by do |p|
-          [ p.data['date'], p.data['categories'].first.to_s ]
+      if @config.generate_categories?
+        @site.post_attr_hash('categories').each_pair do |title, posts|
+          generate_category_for_output title, posts, output
         end
-
-        full_file = PandocFile.new(@site, output, full, title, { full: true })
-        full_file.write
-        @site.keep_files << full_file.relative_path
-        @pandoc_files << full_file
       end
+
+      general_full_for_output(output) if @config.generate_full_file?
     end
 
     @pandoc_files.each do |pandoc_file|

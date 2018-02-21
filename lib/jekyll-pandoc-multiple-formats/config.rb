@@ -1,7 +1,11 @@
 module JekyllPandocMultipleFormats
   class Config
     DEFAULTS = {
-      'skip'              => false,
+      'skip'              => {
+        'posts' => false,
+        'categories' => false,
+        'full' => false
+      },
       'bundle_permalink'  => ':output_ext/:slug.:output_ext',
       'papersize'         => 'a5paper',
       'sheetsize'         => 'a4paper',
@@ -23,7 +27,7 @@ module JekyllPandocMultipleFormats
     end
 
     def skip?
-      @config['skip']
+      @config['skip'].values.all?
     end
 
     def imposition?
@@ -34,13 +38,21 @@ module JekyllPandocMultipleFormats
       @config['binder']
     end
 
-    def full_file?
-      @config['full_file']
-    end
-
     # TODO magic
     def outputs
       @config['outputs']
+    end
+
+    def generate_posts?
+      !@config.dig('skip', 'posts')
+    end
+
+    def generate_categories?
+      !@config.dig('skip', 'categories')
+    end
+
+    def generate_full_file?
+      !@config.dig('skip', 'full')
     end
   end
 end
