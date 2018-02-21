@@ -87,7 +87,10 @@ regular jekyll site build.
 * `sheetsize` is the page size for ready the print PDF.  You can also
   use this option on the front matter.
 
-* `covers_dir` the directory where covers are stored
+* `covers_dir` the directory where covers are stored.  If you have a
+  `lang` defined, it will append the language to the `covers_dir` when
+  looking for a category/full site cover, so you can have localized
+  covers.
 
 * `signature` is the amount of pages per fold on the imposition version.
   Specify `0` for a single fold of all the pages.  You can also use this

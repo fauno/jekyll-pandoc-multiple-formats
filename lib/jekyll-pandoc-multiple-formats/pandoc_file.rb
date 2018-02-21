@@ -186,8 +186,8 @@ module Jekyll
       # Move to the source dir since everything will be relative to that
       Dir::chdir(@site.config['source']) do
         # Do the stuff
-        puts command
-        Open3::popen3(command) do |stdin, stdout, stderr, thread|
+        Jekyll.logger.debug command
+        e = Open3::popen3(command) do |stdin, stdout, stderr, thread|
           stdin.puts yaml_metadata
           stdin.puts content
           stdin.close
@@ -196,6 +196,8 @@ module Jekyll
           # Wait for the process to finish
           thread.value
         end
+
+        Jekyll.logger.warn 'Pandoc:', "Failed generating #{path}" if e.to_i > 0
       end
 
       File.exists?(path)
@@ -205,11 +207,19 @@ module Jekyll
     #
     # It assumes covers are in PNG format
     def cover
+      cover_path = [ @site.config['source'] ]
       if single_post? && single_post.data['cover']
-        File.join(@site.config['source'], single_post.data['cover'])
+        cover_path << single_post.data['cover']
+      elsif site_lang?
+        cover_path << @config['covers_dir']
+        cover_path << site_lang
+        cover_path << "#{@slug}.png"
       else
-        File.join(@site.config['source'], @config['covers_dir'], "#{@slug}.png")
+        cover_path << @config['covers_dir']
+        cover_path << "#{@slug}.png"
       end
+
+      File.join(cover_path)
     end
 
     # Returns a PDF cover
@@ -296,7 +306,10 @@ module Jekyll
     end
 
     def has_cover?
-      File.exists? cover
+      e = File.exists? cover
+      Jekyll.logger.warn "Cover:", "#{cover} missing for #{relative_path}" unless e
+
+      e
     end
 
     def papersize
