@@ -59,6 +59,10 @@ module Jekyll
       path = @site.in_dest_dir(relative_path)
     end
 
+    def path_with_quotes
+      "\"#{path}\""
+    end
+
     def relative_path
       path = URL.unescape_path(url)
       path.gsub! /^\//, ''
@@ -222,6 +226,10 @@ module Jekyll
       File.join(cover_path)
     end
 
+    def cover_with_quotes
+      "\"#{cover}\""
+    end
+
     # Returns a PDF cover
     def pdf_cover
       cover.gsub(/\.[^\.]+\Z/, '.pdf')
@@ -246,7 +254,7 @@ module Jekyll
       @flags << @config['flags']
       @flags << @config['outputs'][@format] if @config['outputs'].key?(@format)
       @flags << '-o'
-      @flags << path
+      @flags << path_with_quotes
 
       # Binary formats don't need a -t flag
       unless binary?
@@ -256,7 +264,7 @@ module Jekyll
 
       if epub? && has_cover?
         @flags << '--epub-cover-image'
-        @flags << cover
+        @flags << cover_with_quotes
       end
 
       if full?
