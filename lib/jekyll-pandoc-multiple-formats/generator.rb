@@ -30,12 +30,9 @@ class PandocGenerator < Generator
 
   def generate_post_for_output(post, output)
     Jekyll.logger.debug 'Pandoc:', post.data['title']
-    Jekyll::Hooks.trigger :posts, :pre_render, post, { format: output }
 
     pandoc_file = PandocFile.new(@site, output, post)
     return unless pandoc_file.write
-
-    Jekyll::Hooks.trigger :posts, :post_render, post, { format: output }
 
     @site.keep_files << pandoc_file.relative_path
     @pandoc_files << pandoc_file
@@ -88,10 +85,10 @@ class PandocGenerator < Generator
 
     @config.outputs.each_pair do |output, _|
       Jekyll.logger.info 'Pandoc:', "Generating #{output}"
-      if @config.generate_posts?
-        @site.posts.docs.each do |post|
-          generate_post_for_output post, output
-        end
+      @site.posts.docs.each do |post|
+        Jekyll::Hooks.trigger :posts, :pre_render, post, { format: output }
+        generate_post_for_output(post, output) if @config.generate_posts?
+        Jekyll::Hooks.trigger :posts, :post_render, post, { format: output }
       end
 
       if @config.generate_categories?
