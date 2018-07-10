@@ -26,7 +26,7 @@ module Jekyll
     include Convertible
 
     attr_reader :format, :site, :config, :flags, :posts, :slug, :title, :url
-    attr_reader :papersize, :sheetsize, :signature
+    attr_reader :papersize, :sheetsize, :signature, :sources
 
     def initialize(site, format, posts, title = nil, extra = {})
       @site   = site
@@ -184,6 +184,12 @@ module Jekyll
     end
 
     def write
+      unless rebuild?
+        Jekyll.logger.info "#{relative_path} doesn't need to be rebuilt"
+        Jekyll.logger.debug sources.join(' ')
+        return true
+      end
+
       FileUtils.mkdir_p(File.dirname(path))
       # Remove the file before creating it
       FileUtils.rm_f(path)
@@ -330,6 +336,27 @@ module Jekyll
 
     def signature
       @signature ||= find_option 'signature'
+    end
+
+    # Finds the source files for this pandoc file
+    def sources
+      return @sources if @sources
+
+      @sources = ['_config.yml']
+      @sources << flags.split(' ').map do |flag|
+        file = File.join(@site.config['source'], flag.split('=').last)
+        file if File.exist? file
+      end
+
+      @sources << posts.map(&:path)
+
+      @sources = @sources.flatten.compact
+    end
+
+    def rebuild?
+      !File.exist?(path) || sources.map do |f|
+        File.ctime(f) > File.ctime(path)
+      end.any?
     end
 
     private
