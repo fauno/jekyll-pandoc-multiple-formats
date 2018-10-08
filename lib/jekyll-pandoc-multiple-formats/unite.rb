@@ -32,7 +32,7 @@ module JekyllPandocMultipleFormats
       \\end{document}
       EOT
 
-    INCLUDE_TEMPLATE = '\\includepdf[fitpaper=true,pages=-]{@@document@@}'
+    INCLUDE_TEMPLATE = '\\includepdf[fitpaper=true,pages=-]{\detokenize@@document@@}}'
 
     attr_accessor :files, :template
 
