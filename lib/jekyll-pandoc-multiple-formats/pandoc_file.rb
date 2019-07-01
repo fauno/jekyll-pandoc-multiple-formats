@@ -36,22 +36,20 @@ module Jekyll
       @last_cat = nil
       @extra = extra
 
-      if posts.is_a? Array
-        @single_post = false
+      @single_post = not(posts.is_a? Array)
+
+      if single_post?
+        @posts = [posts]
+        @title = title or posts.data['title']
+      else
         @posts = posts
 
         raise ArgumentError.new "'title' argument is required for multipost file" unless title
 
         @title = title
-        @slug = Utils.slugify(@title)
-      else
-        @single_post = true
-        @posts = [posts]
-        @title = title || posts.data['title']
-        @slug  = posts.data['slug']
       end
 
-      self
+      @slug = Utils.slugify(@title)
     end
 
     def path
@@ -71,6 +69,14 @@ module Jekyll
       # (ie /year/month/slug/slug.pdf)
       if url.end_with? '/'
         path = File.join(path, @slug)
+        path << '.'
+        path << @format
+      end
+
+      # if permalink ends with trailing .html or trailing slash, path now ends with proper suffix
+      # for other cases (permalink with no trailing extension or slash), append format
+      # (ie /year/month/slug permalink --> /year/month/slug.pdf)
+      if not path.end_with? ".#{@format}"
         path << '.'
         path << @format
       end
